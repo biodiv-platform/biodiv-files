@@ -12,7 +12,6 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -25,6 +24,7 @@ import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
+import javax.xml.bind.DatatypeConverter;
 
 import org.apache.tika.Tika;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -194,8 +194,8 @@ public class FileUploadService {
 
 	public MyUpload saveFileEncoded(MobileFileUpload fileUplaod, Long userId) {
 		try {
-			String decodedString = new String(Base64.getDecoder().decode(fileUplaod.getFile().getBytes()));
-			InputStream targetStream = new ByteArrayInputStream(decodedString.getBytes());
+			InputStream targetStream = new ByteArrayInputStream(
+					DatatypeConverter.parseBase64Binary(fileUplaod.getFile()));
 			MODULE mod = AppUtil.getModule(fileUplaod.getModule());
 			if (mod == null)
 				return null;
