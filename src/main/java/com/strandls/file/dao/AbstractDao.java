@@ -4,8 +4,6 @@ import java.io.Serializable;
 import java.lang.reflect.ParameterizedType;
 import java.util.List;
 
-import javax.persistence.NoResultException;
-
 import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -17,6 +15,7 @@ public abstract class AbstractDao<T, K extends Serializable> {
 
 	protected Class<? extends T> daoType;
 
+	@SuppressWarnings("unchecked")
 	protected AbstractDao(SessionFactory sessionFactory) {
 		daoType = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
 		this.sessionFactory = sessionFactory;
@@ -75,7 +74,7 @@ public abstract class AbstractDao<T, K extends Serializable> {
 
 	public abstract T findById(K id);
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "deprecation" })
 	public List<T> findAll() {
 		List<T> entities = null;
 		try (Session session = sessionFactory.openSession()) {

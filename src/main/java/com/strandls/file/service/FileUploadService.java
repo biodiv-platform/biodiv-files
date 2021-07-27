@@ -1,5 +1,6 @@
 package com.strandls.file.service;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -11,6 +12,7 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -34,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.io.Files;
 import com.strandls.authentication_utility.util.AuthUtil;
 import com.strandls.file.model.FileUploadModel;
+import com.strandls.file.model.MobileFileUpload;
 import com.strandls.file.model.MyUpload;
 import com.strandls.file.model.comparator.UploadDateSort;
 import com.strandls.file.util.AppUtil;
@@ -187,6 +190,22 @@ public class FileUploadService {
 			fileUploadModel.setError("Unable to upload image");
 			return fileUploadModel;
 		}
+	}
+
+	public MyUpload saveFileEncoded(MobileFileUpload fileUplaod, Long userId) {
+		try {
+			String decodedString = new String(Base64.getDecoder().decode(fileUplaod.getFile().getBytes()));
+			InputStream targetStream = new ByteArrayInputStream(decodedString.getBytes());
+			MODULE mod = AppUtil.getModule(fileUplaod.getModule());
+			if (mod == null)
+				return null;
+
+			return saveFile(targetStream, mod, fileUplaod.getFilename(), fileUplaod.getHash(), userId);
+
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+		}
+		return null;
 	}
 
 	/**
