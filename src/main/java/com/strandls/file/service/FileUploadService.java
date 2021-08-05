@@ -472,8 +472,9 @@ public class FileUploadService {
 				File folderFile = new File(folderBasePath + file);
 				if (file.startsWith(File.separatorChar + "ibpmu-")) {
 					File f = new File(basePath + file);
-					System.out.println("Folder base path" + f.exists());
+					System.out.println("Folder base path " + f.exists());
 					if (f.exists()) {
+						System.out.println("reached");
 						String fileSize = String.valueOf(java.nio.file.Files.size(f.toPath()));
 						String fileName = f.getName();
 						FileUploadModel model = uploadFile(f.getAbsolutePath(), folder.getFolder(),
@@ -490,8 +491,11 @@ public class FileUploadService {
 						if (isDeleted)
 							finalPaths.put(file, fileAttributes);
 
+						System.out.println("file moved");
+
 					}
 				} else if (folderFile.exists()) {
+					System.out.println("exists already");
 					String folderFileSize = String.valueOf(java.nio.file.Files.size(folderFile.toPath()));
 					FileUploadModel model = new FileUploadModel();
 					Map<String, String> fileAttributes = new HashMap<>();
@@ -500,8 +504,10 @@ public class FileUploadService {
 					fileAttributes.put("size", folderFileSize);
 					finalPaths.put(file, fileAttributes);
 				}
+				
 			}
 		} catch (Exception ex) {
+			System.out.println(ex.getMessage());
 			logger.error(ex.getMessage());
 		}
 		return finalPaths;

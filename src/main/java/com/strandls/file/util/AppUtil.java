@@ -26,11 +26,7 @@ import org.slf4j.LoggerFactory;
 import com.strandls.file.model.MyUpload;
 
 import net.lingala.zip4j.ZipFile;
-import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.FileHeader;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class AppUtil {
 	private static final List<String> PREVENTIVE_TOKENS = Arrays.asList("&", "|", "`", "$", ";");
