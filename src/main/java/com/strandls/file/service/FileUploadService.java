@@ -131,65 +131,71 @@ public class FileUploadService {
 		}
 	}
 
-	private FileUploadModel uploadFile(String source, String directory, String hashKey, String fileName, MODULE module)
-			throws IOException {
+	private FileUploadModel uploadFile(String source, String directory, String hashKey, String fileName,
+			MODULE module) {
 
-		FileUploadModel fileUploadModel = new FileUploadModel();
+		try {
+			FileUploadModel fileUploadModel = new FileUploadModel();
 
-		String fileExtension = Files.getFileExtension(fileName);
+			String fileExtension = Files.getFileExtension(fileName);
 
-		String folderName = "".equals(hashKey) ? UUID.randomUUID().toString() : hashKey;
-		String dirPath = storageBasePath + File.separatorChar + directory + File.separatorChar + folderName;
+			String folderName = "".equals(hashKey) ? UUID.randomUUID().toString() : hashKey;
+			String dirPath = storageBasePath + File.separatorChar + directory + File.separatorChar + folderName;
 
-		Tika tika = new Tika();
-		String probeContentType = tika.detect(fileName);
+			Tika tika = new Tika();
+			String probeContentType = tika.detect(fileName);
 
-		boolean allowedContentType = AppUtil.filterFileTypeForModule(probeContentType, module);
-		if (probeContentType == null || !allowedContentType) {
-			fileUploadModel.setError("Invalid file type. Allowed types are image, audio and video");
-			return fileUploadModel;
-		} else {
-			fileUploadModel.setType(probeContentType);
-		}
+			boolean allowedContentType = AppUtil.filterFileTypeForModule(probeContentType, module);
+			if (probeContentType == null || !allowedContentType) {
+				fileUploadModel.setError("Invalid file type. Allowed types are image, audio and video");
+				return fileUploadModel;
+			} else {
+				fileUploadModel.setType(probeContentType);
+			}
 
-		if ("".equals(hashKey)) {
-			File dir = new File(dirPath);
-			boolean created = dir.mkdirs();
-			if (!created) {
-				fileUploadModel.setError("Directory creation failed");
+			if ("".equals(hashKey)) {
+				File dir = new File(dirPath);
+				boolean created = dir.mkdirs();
+				if (!created) {
+					fileUploadModel.setError("Directory creation failed");
+					return fileUploadModel;
+				}
+			}
+
+			String tempFileName = UUID.randomUUID().toString().replaceAll("-", "");
+			String generatedFileName = tempFileName + "." + fileExtension;
+
+			String filePath = dirPath + File.separatorChar + generatedFileName;
+			File destFile = new File(filePath);
+			if (!destFile.getParentFile().exists()) {
+				destFile.getParentFile().mkdirs();
+			}
+			System.out.println("\n\n***** Source: " + source + " Destination: " + filePath + " *****\n\n");
+			Path path = java.nio.file.Files.move(Paths.get(source), Paths.get(filePath),
+					StandardCopyOption.ATOMIC_MOVE);
+			boolean uploaded = path != null;
+
+			fileUploadModel.setUploaded(uploaded);
+
+			if (probeContentType.startsWith("image")) {
+				Thread thread = new Thread(new ThumbnailUtil(filePath, dirPath, tempFileName, fileExtension));
+				thread.start();
+			}
+
+			if (uploaded) {
+				String resultPath = File.separatorChar + folderName + File.separatorChar + generatedFileName;
+				fileUploadModel.setHashKey(folderName);
+				fileUploadModel.setFileName(generatedFileName);
+				fileUploadModel.setUri(resultPath);
+				return fileUploadModel;
+			} else {
+				fileUploadModel.setError("Unable to upload image");
 				return fileUploadModel;
 			}
+		} catch (Exception e) {
+			System.out.println("exception  upload file me" + e.getMessage());
 		}
-
-		String tempFileName = UUID.randomUUID().toString().replaceAll("-", "");
-		String generatedFileName = tempFileName + "." + fileExtension;
-
-		String filePath = dirPath + File.separatorChar + generatedFileName;
-		File destFile = new File(filePath);
-		if (!destFile.getParentFile().exists()) {
-			destFile.getParentFile().mkdirs();
-		}
-		System.out.println("\n\n***** Source: " + source + " Destination: " + filePath + " *****\n\n");
-		Path path = java.nio.file.Files.move(Paths.get(source), Paths.get(filePath), StandardCopyOption.ATOMIC_MOVE);
-		boolean uploaded = path != null;
-
-		fileUploadModel.setUploaded(uploaded);
-
-		if (probeContentType.startsWith("image")) {
-			Thread thread = new Thread(new ThumbnailUtil(filePath, dirPath, tempFileName, fileExtension));
-			thread.start();
-		}
-
-		if (uploaded) {
-			String resultPath = File.separatorChar + folderName + File.separatorChar + generatedFileName;
-			fileUploadModel.setHashKey(folderName);
-			fileUploadModel.setFileName(generatedFileName);
-			fileUploadModel.setUri(resultPath);
-			return fileUploadModel;
-		} else {
-			fileUploadModel.setError("Unable to upload image");
-			return fileUploadModel;
-		}
+		return null;
 	}
 
 	public MyUpload saveFileEncoded(MobileFileUpload fileUplaod, Long userId) {
@@ -477,22 +483,27 @@ public class FileUploadService {
 						System.out.println("reached");
 						String fileSize = String.valueOf(java.nio.file.Files.size(f.toPath()));
 						String fileName = f.getName();
+						System.out.println(" absolute :" + f.getAbsolutePath());
+						System.out.println("folder : " + folder.getFolder());
+						System.out.println("filee name " + fileName);
+						System.out.println(" mdouele name " + module);
+
 						FileUploadModel model = uploadFile(f.getAbsolutePath(), folder.getFolder(),
 								existingHash == null ? hash : existingHash, fileName, module);
 						String uri = model.getUri();
 						uri = uri.substring(uri.lastIndexOf(File.separatorChar) + 1);
-						
-						System.out.println("file name ::"+fileName);
-						
+
+						System.out.println("file name ::" + fileName);
+
 						uploadedMetaDataService.saveUploadedFileMetadata(userId, fileName, uri,
 								AppUtil.FILE_UPLOAD_TYPES.MOVE.toString());
 						Map<String, String> fileAttributes = new HashMap<>();
 						fileAttributes.put("name", model.getUri());
 						fileAttributes.put("mimeType", tika.detect(fileName));
 						fileAttributes.put("size", fileSize);
-						
+
 						System.out.println("file almost moved");
-						
+
 						boolean isDeleted = f.getParentFile().delete();
 						if (isDeleted)
 							finalPaths.put(file, fileAttributes);
