@@ -493,6 +493,8 @@ public class FileUploadService {
 
 						FileUploadModel model = uploadFile(f.getAbsolutePath(), folder.getFolder(),
 								existingHash == null ? hash : existingHash, fileName, module);
+						
+						System.out.println("error hua toh : "+model.getError());
 						String uri = model.getUri();
 						uri = uri.substring(uri.lastIndexOf(File.separatorChar) + 1);
 
