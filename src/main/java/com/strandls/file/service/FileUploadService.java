@@ -481,12 +481,18 @@ public class FileUploadService {
 								existingHash == null ? hash : existingHash, fileName, module);
 						String uri = model.getUri();
 						uri = uri.substring(uri.lastIndexOf(File.separatorChar) + 1);
+						
+						System.out.println("file name ::"+fileName);
+						
 						uploadedMetaDataService.saveUploadedFileMetadata(userId, fileName, uri,
 								AppUtil.FILE_UPLOAD_TYPES.MOVE.toString());
 						Map<String, String> fileAttributes = new HashMap<>();
 						fileAttributes.put("name", model.getUri());
 						fileAttributes.put("mimeType", tika.detect(fileName));
 						fileAttributes.put("size", fileSize);
+						
+						System.out.println("file almost moved");
+						
 						boolean isDeleted = f.getParentFile().delete();
 						if (isDeleted)
 							finalPaths.put(file, fileAttributes);
@@ -504,10 +510,10 @@ public class FileUploadService {
 					fileAttributes.put("size", folderFileSize);
 					finalPaths.put(file, fileAttributes);
 				}
-				
+
 			}
 		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
+			System.out.println("exception hua " + ex.getMessage());
 			logger.error(ex.getMessage());
 		}
 		return finalPaths;
