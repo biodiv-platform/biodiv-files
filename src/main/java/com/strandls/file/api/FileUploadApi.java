@@ -5,6 +5,7 @@ import com.strandls.authentication_utility.util.AuthUtil;
 import com.strandls.file.ApiContants;
 import com.strandls.file.dto.FilesDTO;
 import com.strandls.file.model.FileUploadModel;
+import com.strandls.file.model.MobileFileUpload;
 import com.strandls.file.model.MyUpload;
 import com.strandls.file.service.FileUploadService;
 import com.strandls.file.util.AppUtil;
@@ -44,9 +45,40 @@ import java.util.Map;
 public class FileUploadApi {
 
 	private static final Logger logger = LoggerFactory.getLogger(FileUploadApi.class);
- 
+
 	@Inject
 	private FileUploadService fileUploadService;
+
+	@POST
+	@Path(ApiContants.MY_UPLOADS + ApiContants.MOBILE)
+
+	@ValidateUser
+
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+
+	@ApiOperation(value = "Upload files to myUploads from mobile", notes = "Returns uploaded file data", response = MyUpload.class)
+	public Response saveMobileUpload(@Context HttpServletRequest request,
+			@ApiParam(name = "mobileUpload") MobileFileUpload mobileUpload) {
+		try {
+
+			if (mobileUpload.getHash() == null || mobileUpload.getHash().isEmpty()) {
+				return Response.status(Status.BAD_REQUEST).entity("Hash required").build();
+			}
+
+			if (mobileUpload.getFile() == null || mobileUpload.getFile().isEmpty()) {
+				return Response.status(Status.BAD_REQUEST).entity("Input upload  Stream required").build();
+			}
+
+			CommonProfile profile = AuthUtil.getProfileFromRequest(request);
+			Long userId = Long.parseLong(profile.getId());
+			MyUpload result = fileUploadService.saveFileEncoded(mobileUpload, userId);
+			return Response.status(Status.OK).entity(result).build();
+
+		} catch (Exception e) {
+			return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
+		}
+	}
 
 	@POST
 	@Path(ApiContants.MY_UPLOADS)
@@ -119,11 +151,10 @@ public class FileUploadApi {
 			int exitCode = process.waitFor();
 			if (exitCode == 0)
 				return Response.status(Status.OK).entity("File Creation Successful!").build();
-		}catch (InterruptedException ie) {
+		} catch (InterruptedException ie) {
 			logger.error("InterruptedException: ", ie);
 			Thread.currentThread().interrupt();
-		} 
-		catch (Exception e) {
+		} catch (Exception e) {
 			return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
 		}
 		return Response.status(Status.BAD_REQUEST).entity("File Creation Failed").build();

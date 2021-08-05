@@ -1,39 +1,50 @@
 package com.strandls.file.model;
 
-import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
 @Entity
 @Table(name = "uploaded_file_metadata")
 public class UploadedFileMetadata implements Serializable {
 
-    public UploadedFileMetadata(Long userId, String uploadedFileOriginalName, String uploadedFileRenamed, String type, Date movementDate) {
-        this.userId = userId;
-        this.fileOriginalName = uploadedFileOriginalName;
-        this.fileNewName = uploadedFileRenamed;
-        this.type = type;
-        this.movementDate = movementDate;
-    }
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -4561731591816339242L;
 
-    @Id
-    @GeneratedValue
-    @Column(name = "id")
-    private Long id;
+	public UploadedFileMetadata(Long userId, String uploadedFileOriginalName, String uploadedFileRenamed, String type,
+			Date movementDate) {
+		this.userId = userId;
+		this.fileOriginalName = uploadedFileOriginalName;
+		this.fileNewName = uploadedFileRenamed;
+		this.type = type;
+		this.movementDate = movementDate;
+	}
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+	@Id
+	@GeneratedValue
+	@Column(name = "id")
+	private Long id;
 
-    @Column(name = "file_original_name", nullable = false)
-    private String fileOriginalName;
+	@Column(name = "user_id", nullable = false)
+	private Long userId;
 
-    @Column(name = "file_new_name", nullable = false)
-    private String fileNewName;
+	@Column(name = "file_original_name", nullable = false)
+	private String fileOriginalName;
 
-    @Column(name = "type", nullable = false)
-    private String type;
+	@Column(name = "file_new_name", nullable = false)
+	private String fileNewName;
 
-    @Column(name = "movement_date", nullable = false)
-    private Date movementDate;
+	@Column(name = "type", nullable = false)
+	private String type;
+
+	@Column(name = "movement_date", nullable = false)
+	private Date movementDate;
 
 }
