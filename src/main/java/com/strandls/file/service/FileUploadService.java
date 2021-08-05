@@ -142,11 +142,13 @@ public class FileUploadService {
 			String folderName = "".equals(hashKey) ? UUID.randomUUID().toString() : hashKey;
 			String dirPath = storageBasePath + File.separatorChar + directory + File.separatorChar + folderName;
 
+			System.out.println("reached  tika se phele");
 			Tika tika = new Tika();
 			String probeContentType = tika.detect(fileName);
 
 			boolean allowedContentType = AppUtil.filterFileTypeForModule(probeContentType, module);
 			if (probeContentType == null || !allowedContentType) {
+				System.out.println("Invalid file type. Allowed types are image, audio and video");
 				fileUploadModel.setError("Invalid file type. Allowed types are image, audio and video");
 				return fileUploadModel;
 			} else {
@@ -157,6 +159,7 @@ public class FileUploadService {
 				File dir = new File(dirPath);
 				boolean created = dir.mkdirs();
 				if (!created) {
+					System.out.println("Directory creation failed");
 					fileUploadModel.setError("Directory creation failed");
 					return fileUploadModel;
 				}
@@ -187,8 +190,13 @@ public class FileUploadService {
 				fileUploadModel.setHashKey(folderName);
 				fileUploadModel.setFileName(generatedFileName);
 				fileUploadModel.setUri(resultPath);
+				System.out.println("upload complete hua");
+				System.out.println("folder name :" + folderName);
+				System.out.println("generated  fie " + generatedFileName);
+				System.out.println("result :" + resultPath);
 				return fileUploadModel;
 			} else {
+				System.out.println("Unable to upload image");
 				fileUploadModel.setError("Unable to upload image");
 				return fileUploadModel;
 			}
@@ -480,13 +488,8 @@ public class FileUploadService {
 					File f = new File(basePath + file);
 					System.out.println("Folder base path " + f.exists());
 					if (f.exists()) {
-						System.out.println("reached");
 						String fileSize = String.valueOf(java.nio.file.Files.size(f.toPath()));
 						String fileName = f.getName();
-						System.out.println(" absolute :" + f.getAbsolutePath());
-						System.out.println("folder : " + folder.getFolder());
-						System.out.println("filee name " + fileName);
-						System.out.println(" mdouele name " + module);
 
 						FileUploadModel model = uploadFile(f.getAbsolutePath(), folder.getFolder(),
 								existingHash == null ? hash : existingHash, fileName, module);
