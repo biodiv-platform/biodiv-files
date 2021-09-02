@@ -28,6 +28,7 @@ public class FileUtil {
 						out.write(buf, 0, c);
 						out.flush();
 					}
+					in.close();
 					out.close();
 				}
 			};
@@ -35,10 +36,9 @@ public class FileUtil {
 			return Response.ok(sout).type(contentType).header("Content-Length", src.length())
 					.cacheControl(AppUtil.getCacheControl()).build();
 		} catch (Exception e) {
+			in.close();
 			return Response.serverError().entity(e.getMessage()).build();
 
-		} finally {
-			in.close();
 		}
 	}
 }
