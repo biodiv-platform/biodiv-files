@@ -26,11 +26,9 @@ import org.slf4j.LoggerFactory;
 import com.strandls.file.model.MyUpload;
 
 import net.lingala.zip4j.ZipFile;
-import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.FileHeader;
 
 public class AppUtil {
-
 	private static final List<String> PREVENTIVE_TOKENS = Arrays.asList("&", "|", "`", "$", ";");
 	private static final int QUALITY = 90;
 
@@ -41,7 +39,7 @@ public class AppUtil {
 	static {
 		ALLOWED_CONTENT_TYPES.put(MODULE.OBSERVATION, Arrays.asList("image", "video", "audio"));
 		ALLOWED_CONTENT_TYPES.put(MODULE.DOCUMENT, Arrays.asList("pdf"));
-		ALLOWED_CONTENT_TYPES.put(MODULE.SPECIES, Arrays.asList());
+		ALLOWED_CONTENT_TYPES.put(MODULE.SPECIES, Arrays.asList("image", "video", "audio"));
 		ALLOWED_CONTENT_TYPES.put(MODULE.DATASETS, Arrays.asList("vnd.ms-excel", "spreadsheetml.sheet", "csv"));
 	};
 
@@ -139,8 +137,6 @@ public class AppUtil {
 				files.add(upload);
 			}
 			System.out.println("=====================Completed UnZip bulk Uploads=================");
-		} catch (ZipException ex) {
-			logger.error(ex.getMessage());
 		} catch (Exception ex) {
 			logger.error(ex.getMessage());
 		}
@@ -183,7 +179,7 @@ public class AppUtil {
 		try {
 			isFileGenerated = executeCommandWithExitValue(command);
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			logger.error(ex.getMessage());
 		}
 		return isFileGenerated;
 	}
@@ -318,7 +314,7 @@ public class AppUtil {
 			String delimiter = "-quality " + String.valueOf(QUALITY);
 			resizedImage = new File(command.substring(command.indexOf(delimiter) + delimiter.length()).trim());
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			logger.error(ex.getMessage());
 		}
 		return resizedImage;
 	}
@@ -338,8 +334,11 @@ public class AppUtil {
 				}
 				p.waitFor();
 			}
+		} catch (InterruptedException ie) {
+			logger.error("InterruptedException: ", ie);
+			Thread.currentThread().interrupt();
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			logger.error(ex.getMessage());
 		}
 		return output.toString();
 	}
@@ -353,8 +352,11 @@ public class AppUtil {
 				p = Runtime.getRuntime().exec(commands);
 				output = p.waitFor(5, TimeUnit.SECONDS);
 			}
+		} catch (InterruptedException ie) {
+			logger.error("InterruptedException: ", ie);
+			Thread.currentThread().interrupt();
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			logger.error(ex.getMessage());
 		}
 		return output;
 	}
@@ -383,7 +385,7 @@ public class AppUtil {
 				value = new Double(h + (m / 60) + (s / 3600));
 			}
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			logger.error(ex.getMessage());
 		}
 		return value;
 	}

@@ -1,7 +1,6 @@
 package com.strandls.file.model;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 
 public class MyUpload {

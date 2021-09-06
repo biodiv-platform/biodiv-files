@@ -2,19 +2,15 @@ package com.strandls.file.service;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Properties;
 
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.core.StreamingOutput;
 
 import org.apache.tika.Tika;
 import org.slf4j.Logger;
@@ -23,9 +19,9 @@ import org.slf4j.LoggerFactory;
 import com.google.common.io.Files;
 import com.strandls.file.ApiContants;
 import com.strandls.file.util.AppUtil;
-import com.strandls.file.util.AppUtil.BASE_FOLDERS;
 import com.strandls.file.util.ImageUtil;
 import com.strandls.file.util.AppUtil.BASE_FOLDERS;
+import com.strandls.file.util.FileUtil;
 import com.strandls.file.util.ThumbnailUtil;
 
 public class FileDownloadService {
@@ -41,13 +37,13 @@ public class FileDownloadService {
 		try {
 			properties.load(in);
 		} catch (IOException e) {
-			e.printStackTrace();
+			logger.error(e.getMessage());
 		}
 
 		storageBasePath = properties.getProperty("storage_dir", "/home/apps/biodiv-image");
 	}
 
-	public Response getFile(String hashKey, String fileName, String imageVariation) throws FileNotFoundException {
+	public Response getFile(String hashKey, String fileName, String imageVariation) throws IOException {
 		if (!ApiContants.ORIGINAL.equals(imageVariation)) {
 			String extension = Files.getFileExtension(fileName);
 			String fileNameWithoutExtension = Files.getNameWithoutExtension(fileName);
@@ -55,27 +51,11 @@ public class FileDownloadService {
 		}
 
 		String fileLocation = storageBasePath + File.separatorChar + hashKey + File.separatorChar + fileName;
-
-		InputStream in = new FileInputStream(new File(fileLocation));
-		StreamingOutput sout;
-		sout = new StreamingOutput() {
-			@Override
-			public void write(OutputStream out) throws IOException, WebApplicationException {
-				byte[] buf = new byte[8192];
-				int c;
-				while ((c = in.read(buf, 0, buf.length)) > 0) {
-					out.write(buf, 0, c);
-					out.flush();
-				}
-				out.close();
-			}
-		};
-		return Response.ok(sout).type("image/" + Files.getFileExtension(fileLocation))
-				.cacheControl(AppUtil.getCacheControl()).build();
+                return FileUtil.fromFileToStream(new File(fileLocation), "image/" + Files.getFileExtension(fileLocation));
 	}
 
-	public Response getCustomSizeFile(String hashKey, String fileName, int outputWidth, int outputHeight)
-			throws IOException {
+	public Response getCustomSizeFile(String hashKey, String fileName, int outputWidth, int outputHeight) throws IOException
+			{
 
 		String dirPath = storageBasePath + File.separatorChar + hashKey + File.separatorChar;
 		String fileLocation = dirPath + fileName;
@@ -107,24 +87,7 @@ public class FileDownloadService {
 		File output = new File(
 				dirPath + fileNameWithoutExtension + "_" + imageWidth + "*" + imageHeight + "." + extension);
 		ImageIO.write(outputImage, extension, output);
-
-		@SuppressWarnings("resource")
-		InputStream in = new FileInputStream(output);
-		StreamingOutput sout;
-		sout = new StreamingOutput() {
-			@Override
-			public void write(OutputStream out) throws IOException, WebApplicationException {
-				byte[] buf = new byte[8192];
-				int c;
-				while ((c = in.read(buf, 0, buf.length)) > 0) {
-					out.write(buf, 0, c);
-					out.flush();
-				}
-				out.close();
-			}
-		};
-		return Response.ok(sout).type("image/" + Files.getFileExtension(fileLocation))
-				.cacheControl(AppUtil.getCacheControl()).build();
+                return FileUtil.fromFileToStream(output, "image/" + Files.getFileExtension(fileLocation));
 	}
 
 	public Response getImageResource(HttpServletRequest req, String directory, String fileName, Integer width,
@@ -132,7 +95,6 @@ public class FileDownloadService {
 
 		String dirPath = storageBasePath + File.separatorChar + directory + File.separatorChar;
 		String fileLocation = dirPath + fileName;
-//		File file = new File(fileLocation);
 		File file = AppUtil.findFile(fileLocation);
 		if (file == null) {
 			return Response.status(Status.NOT_FOUND).entity("File not found").build();
@@ -171,27 +133,12 @@ public class FileDownloadService {
 			webpOutput = new File(dirPath + fileNameWithoutExtension + "_" + imgWidth + "*" + imgHeight + "." + format);
 			ImageUtil.toWEBP(req, output, webpOutput);
 		}
-		InputStream in = new FileInputStream(isWebp ? webpOutput : output);
-		StreamingOutput sout;
-		sout = new StreamingOutput() {
-			@Override
-			public void write(OutputStream out) throws IOException, WebApplicationException {
-				byte[] buf = new byte[8192];
-				int c;
-				while ((c = in.read(buf, 0, buf.length)) > 0) {
-					out.write(buf, 0, c);
-					out.flush();
-				}
-				in.close();
-				out.close();
-			}
-		};
-		return Response.ok(sout).type(isWebp ? "image/webp" : contentType).cacheControl(AppUtil.getCacheControl())
-				.build();
+                
+                return FileUtil.fromFileToStream(isWebp ? webpOutput : output, isWebp ? "image/webp" : contentType);
 	}
 
 	public Response getImage(HttpServletRequest req, String directory, String fileName, Integer width, Integer height,
-			String format, String fit, boolean preserve) throws Exception {
+			String format, String fit, boolean preserve) {
 		try {
 
 			String dirPath = storageBasePath + File.separatorChar + directory + File.separatorChar;
@@ -221,67 +168,30 @@ public class FileDownloadService {
 			} else {
 				resizedFile = thumbnailFile;
 			}
-			System.out.println("\n\n***** Resized File: " + resizedFile.getName() + " *****\n\n");
-			String contentType = tika.detect(resizedFile.getName());
-			InputStream in = new FileInputStream(resizedFile);
-			long contentLength = resizedFile.length();
-			StreamingOutput sout;
-			sout = new StreamingOutput() {
-				@Override
-				public void write(OutputStream out) throws IOException, WebApplicationException {
-					byte[] buf = new byte[8192];
-					int c;
-					while ((c = in.read(buf, 0, buf.length)) > 0) {
-						out.write(buf, 0, c);
-						out.flush();
-					}
-					in.close();
-					out.close();
-				}
-			};
-			return Response.ok(sout)
-					.type(preserve ? contentType : format.equalsIgnoreCase("webp") ? "image/webp" : contentType)
-					.header("Content-Length", contentLength).cacheControl(AppUtil.getCacheControl()).build();
+			logger.info("[files-api] Resized File: {}.", resizedFile.getName());
+			String detactedContentType = tika.detect(resizedFile.getName());
+                        String contentType = preserve ? detactedContentType : format.equalsIgnoreCase("webp") ? "image/webp" : detactedContentType;
+
+                        return FileUtil.fromFileToStream(resizedFile, contentType);
 		} catch (FileNotFoundException fe) {
-			fe.printStackTrace();
 			logger.error(fe.getMessage());
 			return Response.status(Status.NOT_FOUND).build();
 		} catch (Exception ex) {
-			ex.printStackTrace();
 			logger.error(ex.getMessage());
 			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 
-	public Response getRawResource(String directory, String fileName) throws Exception {
+	public Response getRawResource(String directory, String fileName) {
 		try {
 			String inputFile = storageBasePath + File.separatorChar + directory + File.separatorChar + fileName;
-//		File file = new File(inputFile);
 			File file = AppUtil.findFile(inputFile);
 			if (file == null) {
-				return Response.status(Status.NOT_FOUND).entity("File not found").build();
+                            return Response.status(Status.NOT_FOUND).entity("File not found").build();
 			}
-			InputStream in = new FileInputStream(file.getAbsolutePath());
 			Tika tika = new Tika();
 			String contentType = tika.detect(file.getName());
-			long contentLength = file.length();
-			StreamingOutput sout;
-			sout = new StreamingOutput() {
-
-				@Override
-				public void write(OutputStream output) throws IOException, WebApplicationException {
-					byte[] buf = new byte[8192];
-					int c;
-					while ((c = in.read(buf, 0, buf.length)) > 0) {
-						output.write(buf, 0, c);
-						output.flush();
-					}
-					in.close();
-					output.close();
-				}
-			};
-			return Response.ok(sout).type(contentType).header("Content-Length", contentLength)
-					.cacheControl(AppUtil.getCacheControl()).build();
+                        return FileUtil.fromFileToStream(file, contentType);
 		} catch (FileNotFoundException fe) {
 			logger.error(fe.getMessage());
 			return Response.status(Status.NOT_FOUND).build();
@@ -291,8 +201,7 @@ public class FileDownloadService {
 		}
 	}
 
-	public Response getLogo(HttpServletRequest req, String directory, String fileName, Integer width, Integer height)
-			throws Exception {
+	public Response getLogo(String directory, String fileName, Integer width, Integer height) {
 		try {
 
 			String dirPath = storageBasePath + File.separatorChar + directory + File.separatorChar;
@@ -302,8 +211,7 @@ public class FileDownloadService {
 			if (file == null) {
 				return Response.status(Status.NOT_FOUND).entity("File not found").build();
 			}
-			System.out
-					.println("\n\n***** FileLocation: " + fileLocation + " ***** " + file.getCanonicalPath() + "\n\n");
+			logger.info("[files-api] File Location: {}.", fileLocation);
 
 			String name = file.getName();
 
@@ -312,46 +220,28 @@ public class FileDownloadService {
 					+ file.getParentFile().getAbsolutePath().substring(storageBasePath.length());
 			String command = null;
 			command = AppUtil.generateCommandLogo(file.getAbsolutePath(), thumbnailFolder, width, height, extension);
-			System.out.println("\n\n***** Command: " + command + " *****\n\n");
+			logger.info("[files-api] Command: {}.", command);
 			File thumbnailFile = AppUtil.getResizedImage(command);
 			File resizedFile;
 			Tika tika = new Tika();
 			if (!thumbnailFile.exists()) {
-				File folders = new File(thumbnailFolder);
-				folders.mkdirs();
-				boolean fileGenerated = AppUtil.generateFile(command);
-				System.out.println("\n\n**** Generated? " + fileGenerated + " *****\n\n");
-				resizedFile = fileGenerated ? AppUtil.getResizedImage(command) : new File(file.toURI());
-				System.out.println("\n\n**** Resized? " + resizedFile + " *****\n\n");
+                            File folders = new File(thumbnailFolder);
+                            folders.mkdirs();
+                            boolean fileGenerated = AppUtil.generateFile(command);
+                            logger.info("[files-api] Generated? {}.", fileGenerated);
+                            resizedFile = fileGenerated ? AppUtil.getResizedImage(command) : new File(file.toURI());
+                            logger.info("[files-api] Resized? {}.", resizedFile);
 			} else {
-				System.out.println("\n\n**** File Exists: " + thumbnailFile.getName() + " *****\n\n");
-				resizedFile = thumbnailFile;
+                            logger.info("[files-api] File Exists: {}.", thumbnailFile.getName());
+                            resizedFile = thumbnailFile;
 			}
 			String contentType = tika.detect(resizedFile.getName());
-			InputStream in = new FileInputStream(resizedFile);
-			long contentLength = resizedFile.length();
-			StreamingOutput sout;
-			sout = new StreamingOutput() {
-				@Override
-				public void write(OutputStream out) throws IOException, WebApplicationException {
-					byte[] buf = new byte[8192];
-					int c;
-					while ((c = in.read(buf, 0, buf.length)) > 0) {
-						out.write(buf, 0, c);
-						out.flush();
-					}
-					in.close();
-					out.close();
-				}
-			};
-			return Response.ok(sout).type(contentType).header("Content-Length", contentLength)
-					.cacheControl(AppUtil.getCacheControl()).build();
+
+                        return FileUtil.fromFileToStream(resizedFile, contentType);
 		} catch (FileNotFoundException fe) {
-			fe.printStackTrace();
 			logger.error(fe.getMessage());
 			return Response.status(Status.NOT_FOUND).build();
 		} catch (Exception ex) {
-			ex.printStackTrace();
 			logger.error(ex.getMessage());
 			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
 		}

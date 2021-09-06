@@ -6,12 +6,17 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.spi.JobFactory;
 import org.quartz.spi.TriggerFiredBundle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 
+
 public class QuartzJobFactory implements JobFactory {
 	
+	private static final Logger logger = LoggerFactory.getLogger(QuartzJobFactory.class);
+
 	private final Injector inject;
 	
 	@Inject
@@ -19,6 +24,7 @@ public class QuartzJobFactory implements JobFactory {
 		this.inject = inject;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public Job newJob(TriggerFiredBundle bundle, Scheduler scheduler) throws SchedulerException {
 		JobDetail jobDetail = bundle.getJobDetail();
@@ -26,7 +32,7 @@ public class QuartzJobFactory implements JobFactory {
 		try {
 			return (Job) inject.getInstance(jobClass);
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			logger.error(ex.getMessage());
 			throw new UnsupportedOperationException(ex);
 		}
 	}	
