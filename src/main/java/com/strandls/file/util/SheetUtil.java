@@ -54,7 +54,7 @@ public class SheetUtil {
 					for (String item : Hist) {
 						Cell currentCell = currentRow.getCell(index);
 						try {
-							if (item.contains("date")) {
+							if (item.toLowerCase().replaceAll("\\s", "").contains("date")) {
 								cust.put(item,
 										currentCell != null ? currentCell.getLocalDateTimeCellValue().toString() : "");
 							} else {
