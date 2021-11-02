@@ -14,8 +14,14 @@ import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.strandls.file.service.FileUploadService;
 
 public class SheetUtil {
+
+	private static final Logger logger = LoggerFactory.getLogger(SheetUtil.class);
 
 	XSSFWorkbook workbook = null;
 	String filePath = null;
@@ -47,9 +53,15 @@ public class SheetUtil {
 					int index = 0;
 					for (String item : Hist) {
 						Cell currentCell = currentRow.getCell(index);
-						if (item.matches("observed_on")) {
-							cust.put(item, currentCell != null ? currentCell.getLocalDateTimeCellValue().toString() : "");
-						} else {
+						try {
+							if (item.contains("date")) {
+								cust.put(item,
+										currentCell != null ? currentCell.getLocalDateTimeCellValue().toString() : "");
+							} else {
+								cust.put(item, currentCell != null ? cellToObject(currentCell) : "");
+							}
+						} catch (Exception e) {
+							logger.error(e.getMessage());
 							cust.put(item, currentCell != null ? cellToObject(currentCell) : "");
 						}
 						index++;
