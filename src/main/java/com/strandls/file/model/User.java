@@ -38,7 +38,6 @@ public class User implements Serializable {
 	private static final long serialVersionUID = -6815897629561065464L;
 
 	private Long id;
-	private Long version;
 	private Boolean accountExpired;
 	private Boolean accountLocked;
 	private Boolean passwordExpired;
@@ -67,7 +66,6 @@ public class User implements Serializable {
 	private Set<Role> roles;
 	private Float timezone;
 	private Boolean identificationMail;
-	private Boolean sendDigest;
 	private Boolean sendPushNotification;
 	private Set<FirebaseTokens> tokens;
 
@@ -87,15 +85,6 @@ public class User implements Serializable {
 
 	public void setId(Long id) {
 		this.id = id;
-	}
-
-	@Column(name = "version")
-	public Long getVersion() {
-		return version;
-	}
-
-	public void setVersion(Long version) {
-		this.version = version;
 	}
 
 	@Column(name = "language_id")
@@ -352,29 +341,20 @@ public class User implements Serializable {
 		this.identificationMail = identificationMail;
 	}
 
-	@Column(name = "send_digest")
-	public Boolean getSendDigest() {
-		return sendDigest;
-	}
-
-	public void setSendDigest(Boolean sendDigest) {
-		this.sendDigest = sendDigest;
-	}
-	
 	@Column(name = "send_push_notification", columnDefinition = "boolean default false")
 	public Boolean getSendPushNotification() {
 		return sendPushNotification;
 	}
-	
+
 	public void setSendPushNotification(Boolean sendPushNotification) {
 		this.sendPushNotification = sendPushNotification;
 	}
-	
+
 	@OneToMany(fetch = FetchType.EAGER, mappedBy = "user")
 	public Set<FirebaseTokens> getTokens() {
 		return tokens;
 	}
-	
+
 	public void setTokens(Set<FirebaseTokens> tokens) {
 		this.tokens = tokens;
 	}
