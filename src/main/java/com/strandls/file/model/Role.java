@@ -23,19 +23,16 @@ public class Role implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 6401648706578439017L;
-	
+
 	@Id
 	@Column(name = "id")
 	private Long id;
-	
-	@Column(name = "version")
-	private Long version;
-	
+
 	@Column(name = "authority")
 	private String authority;
-	
-	//bi-directional many-to-many association to User
-	@ManyToMany(mappedBy="roles")
+
+	// bi-directional many-to-many association to User
+	@ManyToMany(mappedBy = "roles")
 	private Set<User> users;
 
 	public Long getId() {
@@ -44,14 +41,6 @@ public class Role implements Serializable {
 
 	public void setId(Long id) {
 		this.id = id;
-	}
-
-	public Long getVersion() {
-		return version;
-	}
-
-	public void setVersion(Long version) {
-		this.version = version;
 	}
 
 	public String getAuthority() {
