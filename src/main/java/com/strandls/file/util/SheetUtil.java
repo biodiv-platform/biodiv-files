@@ -2,8 +2,11 @@ package com.strandls.file.util;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -17,6 +20,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.opencsv.CSVReader;
 import com.strandls.file.service.FileUploadService;
 
 public class SheetUtil {
@@ -131,6 +135,24 @@ public class SheetUtil {
 	 */
 	public Map<String, Object> convertObjects2JsonString() {
 		return readExcelFile(filePath);
+	}
+
+	public List<String> extractCsvHeaders() {
+		FileReader filereader1;
+		try {
+			filereader1 = new FileReader(filePath);
+			CSVReader csvReader = new CSVReader(filereader1);
+			List<String> result = Arrays.asList(csvReader.readNext());
+
+			csvReader.close();
+			return result;
+
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return null;
 	}
 
 }

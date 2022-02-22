@@ -102,7 +102,9 @@ public class FileUploadApi {
 			CommonProfile profile = AuthUtil.getProfileFromRequest(request);
 			Long userId = Long.parseLong(profile.getId());
 			MODULE mod = AppUtil.getModule(module);
+			System.out.println(mod);
 			if (mod == null) {
+				System.out.println("---ERROR-----");
 				return Response.status(Status.BAD_REQUEST).entity("Invalid Module").build();
 			}
 			MyUpload uploadModel = fileUploadService.saveFile(inputStream, mod, fileDetails.getFileName(), hash,
