@@ -283,7 +283,7 @@ public class FileUploadService {
 
 				List<String> headers = sheetUtil.extractCsvHeaders();
 
-				Map<String, Object> excelJson = new HashMap<String, Object>();
+				Map<String, Object> excelJson = new HashMap<>();
 				excelJson.put("csvHeaders", headers);
 
 				uploadModel.setExcelJson(excelJson);

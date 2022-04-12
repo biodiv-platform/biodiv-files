@@ -2,11 +2,11 @@ package com.strandls.file.util;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -21,7 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.opencsv.CSVReader;
-import com.strandls.file.service.FileUploadService;
 
 public class SheetUtil {
 
@@ -139,18 +138,17 @@ public class SheetUtil {
 
 	public List<String> extractCsvHeaders() {
 
-		try(CSVReader csvReader = new CSVReader(new FileReader(filePath))) {
-			
+		try (CSVReader csvReader = new CSVReader(new FileReader(filePath))) {
+
 			List<String> result = Arrays.asList(csvReader.readNext());
 
-			csvReader.close();
 			return result;
 
 		} catch (Exception e) {
 			logger.error(e.getMessage());
-		
+
 		}
-		return null;
+		return Collections.emptyList();
 	}
 
 }
