@@ -148,8 +148,7 @@ public class SheetUtil {
 			return result;
 
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error(e.getMessage());
 		}
 
 		return null;
