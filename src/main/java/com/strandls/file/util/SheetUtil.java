@@ -138,10 +138,9 @@ public class SheetUtil {
 	}
 
 	public List<String> extractCsvHeaders() {
-		FileReader filereader1;
-		try {
-			filereader1 = new FileReader(filePath);
-			CSVReader csvReader = new CSVReader(filereader1);
+
+		try(CSVReader csvReader = new CSVReader(new FileReader(filePath))) {
+			
 			List<String> result = Arrays.asList(csvReader.readNext());
 
 			csvReader.close();
@@ -149,8 +148,8 @@ public class SheetUtil {
 
 		} catch (Exception e) {
 			logger.error(e.getMessage());
+		
 		}
-
 		return null;
 	}
 
