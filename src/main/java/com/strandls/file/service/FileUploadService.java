@@ -219,6 +219,7 @@ public class FileUploadService {
 		if (!dirFile.exists()) {
 			dirFile.mkdirs();
 		}
+
 		Tika tika = new Tika();
 		String fileName = dir + File.separatorChar + contentFileName;
 		File file = new File(fileName);
@@ -277,6 +278,15 @@ public class FileUploadService {
 				Map<String, Object> excelJson = sheetUtil.convertObjects2JsonString();
 				uploadModel.setExcelJson(excelJson);
 
+			} else if (allowedContentType && module == MODULE.CURATION) {
+				SheetUtil sheetUtil = new SheetUtil(file.getAbsolutePath());
+
+				List<String> headers = sheetUtil.extractCsvHeaders();
+
+				Map<String, Object> excelJson = new HashMap<>();
+				excelJson.put("csvHeaders", headers);
+
+				uploadModel.setExcelJson(excelJson);
 			}
 			attributes = java.nio.file.Files.readAttributes(Paths.get(file.toURI()), BasicFileAttributes.class);
 			Date uploadedDate = new Date(attributes.creationTime().toMillis());
