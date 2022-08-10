@@ -54,7 +54,7 @@ public class AppUtil {
 
 	public static enum BASE_FOLDERS {
 		observations("observations"), img("img"), species("species"), userGroups("userGroups"), users("users"),
-		pages("pages"), traits("traits"), myUploads("myUploads"), thumbnails("thumbnails"), landscape("landscape"),
+		pages("pages"),signature("signature"), traits("traits"), myUploads("myUploads"), thumbnails("thumbnails"), landscape("landscape"),
 		documents(String.join(String.valueOf(File.separatorChar), "content", "documents")), temp("temp"),
 		datatables(String.join(String.valueOf(File.separatorChar), "content", "dataTables")),
 		datasets(String.join(String.valueOf(File.separatorChar), "content", "datasets")),
