@@ -73,7 +73,6 @@ public class CompressedFileUploaderThread implements Runnable {
 		if (probeContentType.endsWith("zip")) {
 			AppUtil.parseZipFiles(absDestinationPath, file.getCanonicalPath(), module);
 		}
-		System.out.println("***Completed compressed file extraction to:  " + absDestinationPath + "***");
 	}
 
 }

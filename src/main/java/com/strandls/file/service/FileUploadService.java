@@ -105,7 +105,6 @@ public class FileUploadService {
 		String generatedFileName = tempFileName + "." + fileExtension;
 
 		String filePath = dirPath + File.separatorChar + generatedFileName;
-		System.out.println("\n\n FileLocation: " + filePath + " *****\n\n");
 		File file = new File(filePath);
 		if (!file.getCanonicalPath().startsWith(storageBasePath)) {
 			throw new IOException("Invalid folder");
@@ -168,7 +167,6 @@ public class FileUploadService {
 		if (!destFile.getParentFile().exists()) {
 			destFile.getParentFile().mkdirs();
 		}
-		System.out.println("\n\n***** Source: " + source + " Destination: " + filePath + " *****\n\n");
 		Path path = java.nio.file.Files.move(Paths.get(source), Paths.get(filePath), StandardCopyOption.ATOMIC_MOVE);
 		boolean uploaded = path != null;
 
@@ -481,7 +479,6 @@ public class FileUploadService {
 				File folderFile = new File(folderBasePath + file);
 				if (file.startsWith(File.separatorChar + "ibpmu-")) {
 					File f = new File(basePath + file);
-					System.out.println("Folder base path " + f.exists());
 					if (f.exists()) {
 						String fileSize = String.valueOf(java.nio.file.Files.size(f.toPath()));
 						String fileName = f.getName();
@@ -534,11 +531,9 @@ public class FileUploadService {
 	}
 
 	private boolean writeToFile(InputStream inputStream, String fileLocation) {
-		System.out.println("\n\n FileLocation: " + fileLocation + " *****\n\n");
 		File f = new File(fileLocation);
 		if (!f.getParentFile().exists()) {
-			boolean created = f.getParentFile().mkdirs();
-			System.out.println(created ? "Folder Created" : "Not Created");
+			f.getParentFile().mkdirs();
 		}
 		try (OutputStream out = new FileOutputStream(f)) {
 			int read = 0;
@@ -629,7 +624,6 @@ public class FileUploadService {
 		try {
 			Map<String, String> files = new HashMap<>();
 			files = getAllFilePathsByUser(userId, folder, module);
-			System.out.println("\n\n***** All files in User " + userId + ": " + files + " *****\n\n");
 
 			List<String> filesWithPath = new ArrayList<>();
 			for (String file : fileList) {

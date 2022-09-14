@@ -116,7 +116,6 @@ public class AppUtil {
 			List<FileHeader> headers = zipFile.getFileHeaders();
 			Iterator<FileHeader> it = headers.iterator();
 			Tika tika = new Tika();
-			System.out.println("==================Bulk Upload for Unzip started==================");
 			while (it.hasNext()) {
 				String hash = String.join("", "ibpmu-", UUID.randomUUID().toString());
 				String destinationPath = storageBasePath + File.separatorChar + hash + File.separatorChar;
@@ -138,7 +137,6 @@ public class AppUtil {
 				upload.setHashKey(hash);
 				files.add(upload);
 			}
-			System.out.println("=====================Completed UnZip bulk Uploads=================");
 		} catch (Exception ex) {
 			logger.error(ex.getMessage());
 		}

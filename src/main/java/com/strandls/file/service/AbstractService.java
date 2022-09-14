@@ -12,7 +12,6 @@ public abstract class  AbstractService<T> {
 	private  AbstractDao<T, Long> dao;
 	
 	public AbstractService(AbstractDao<T, Long> dao) {
-		System.out.println("\nAbstractService constructor");
 		this.dao = dao;
 		entityClass = ((Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0]);
 	}

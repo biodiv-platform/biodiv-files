@@ -68,7 +68,6 @@ public class QuartzJob implements Job {
 	public void execute(JobExecutionContext context) {
 		Session session = sessionFactory.openSession();
 		try {
-			System.out.println("\n\n***** SCHEDULER STARTS *****\n\n");
 			RabbitMQProducer producer = new RabbitMQProducer(channel);
 			try (Stream<Path> stream = Files.list(Paths.get(BASE_PATH)).filter(Files::isDirectory)) {
 				List<Path> paths = stream.collect(Collectors.toList());
@@ -130,8 +129,6 @@ public class QuartzJob implements Job {
 
 				}
 			}
-
-			System.out.println("\n\n***** SCHEDULER ENDS *****\n\n");
 		} catch (Exception ex) {
 			logger.error(ex.getMessage());
 		} finally {

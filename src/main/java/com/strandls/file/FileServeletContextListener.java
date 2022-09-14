@@ -109,7 +109,6 @@ private static final Logger logger = LoggerFactory.getLogger(FileServeletContext
 
 			for (Annotation annotation : annotations) {
 				if (annotation instanceof javax.persistence.Entity) {
-					System.out.println("Mapping entity :" + cls.getCanonicalName());
 					classes.add(cls);
 				}
 			}
@@ -155,8 +154,6 @@ private static final Logger logger = LoggerFactory.getLogger(FileServeletContext
 		try {
 			if (scheduler != null && !scheduler.isShutdown()) {
 				scheduler.shutdown(true);
-
-				System.out.println("\n\n***** Shutdown? " + scheduler.isShutdown() + " *****\n\n");
 			}
 			channel.getConnection().close();
 		} catch (Exception e) {

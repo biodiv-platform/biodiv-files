@@ -168,7 +168,6 @@ public class FileDownloadService {
 			} else {
 				resizedFile = thumbnailFile;
 			}
-			logger.info("[files-api] Resized File: {}.", resizedFile.getName());
 			String detactedContentType = tika.detect(resizedFile.getName());
                         String contentType = preserve ? detactedContentType : format.equalsIgnoreCase("webp") ? "image/webp" : detactedContentType;
 
@@ -211,7 +210,6 @@ public class FileDownloadService {
 			if (file == null) {
 				return Response.status(Status.NOT_FOUND).entity("File not found").build();
 			}
-			logger.info("[files-api] File Location: {}.", fileLocation);
 
 			String name = file.getName();
 
@@ -220,7 +218,6 @@ public class FileDownloadService {
 					+ file.getParentFile().getAbsolutePath().substring(storageBasePath.length());
 			String command = null;
 			command = AppUtil.generateCommandLogo(file.getAbsolutePath(), thumbnailFolder, width, height, extension);
-			logger.info("[files-api] Command: {}.", command);
 			File thumbnailFile = AppUtil.getResizedImage(command);
 			File resizedFile;
 			Tika tika = new Tika();
@@ -228,11 +225,8 @@ public class FileDownloadService {
                             File folders = new File(thumbnailFolder);
                             folders.mkdirs();
                             boolean fileGenerated = AppUtil.generateFile(command);
-                            logger.info("[files-api] Generated? {}.", fileGenerated);
                             resizedFile = fileGenerated ? AppUtil.getResizedImage(command) : new File(file.toURI());
-                            logger.info("[files-api] Resized? {}.", resizedFile);
 			} else {
-                            logger.info("[files-api] File Exists: {}.", thumbnailFile.getName());
                             resizedFile = thumbnailFile;
 			}
 			String contentType = tika.detect(resizedFile.getName());
