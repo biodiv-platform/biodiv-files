@@ -15,7 +15,7 @@
 		<jax-rs-pac4j.version>2.3.0</jax-rs-pac4j.version>
 
 
-		<postgresql.version>42.3.3</postgresql.version>
+		<postgresql.version>42.3.7</postgresql.version>
 		<hibernate-core.version>5.4.1.Final</hibernate-core.version>
 
 
