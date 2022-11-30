@@ -40,7 +40,9 @@ public class FileDownloadService {
 			logger.error(e.getMessage());
 		}
 
-		storageBasePath = properties.getProperty("storage_dir", "/home/apps/biodiv-image");
+		// storageBasePath = properties.getProperty("storage_dir",
+		// "/home/apps/biodiv-image");
+		storageBasePath = "/home/prakhar/plant/";
 	}
 
 	public Response getFile(String hashKey, String fileName, String imageVariation) throws IOException {
@@ -51,11 +53,11 @@ public class FileDownloadService {
 		}
 
 		String fileLocation = storageBasePath + File.separatorChar + hashKey + File.separatorChar + fileName;
-                return FileUtil.fromFileToStream(new File(fileLocation), "image/" + Files.getFileExtension(fileLocation));
+		return FileUtil.fromFileToStream(new File(fileLocation), "image/" + Files.getFileExtension(fileLocation));
 	}
 
-	public Response getCustomSizeFile(String hashKey, String fileName, int outputWidth, int outputHeight) throws IOException
-			{
+	public Response getCustomSizeFile(String hashKey, String fileName, int outputWidth, int outputHeight)
+			throws IOException {
 
 		String dirPath = storageBasePath + File.separatorChar + hashKey + File.separatorChar;
 		String fileLocation = dirPath + fileName;
@@ -87,7 +89,7 @@ public class FileDownloadService {
 		File output = new File(
 				dirPath + fileNameWithoutExtension + "_" + imageWidth + "*" + imageHeight + "." + extension);
 		ImageIO.write(outputImage, extension, output);
-                return FileUtil.fromFileToStream(output, "image/" + Files.getFileExtension(fileLocation));
+		return FileUtil.fromFileToStream(output, "image/" + Files.getFileExtension(fileLocation));
 	}
 
 	public Response getImageResource(HttpServletRequest req, String directory, String fileName, Integer width,
@@ -133,17 +135,35 @@ public class FileDownloadService {
 			webpOutput = new File(dirPath + fileNameWithoutExtension + "_" + imgWidth + "*" + imgHeight + "." + format);
 			ImageUtil.toWEBP(req, output, webpOutput);
 		}
-                
-                return FileUtil.fromFileToStream(isWebp ? webpOutput : output, isWebp ? "image/webp" : contentType);
+
+		return FileUtil.fromFileToStream(isWebp ? webpOutput : output, isWebp ? "image/webp" : contentType);
 	}
 
 	public Response getImage(HttpServletRequest req, String directory, String fileName, Integer width, Integer height,
-			String format, String fit, boolean preserve) {
+			String format, String fit, boolean preserve, boolean isPlantnet) {
 		try {
 
 			String dirPath = storageBasePath + File.separatorChar + directory + File.separatorChar;
 			String fileLocation = dirPath + fileName;
 			File file = AppUtil.findFile(fileLocation);
+
+			BufferedImage bimg = ImageIO.read(file);
+			int OriginalWidth = bimg.getWidth();
+			int OriginalHeight = bimg.getHeight();
+
+			if (isPlantnet == true) {
+				if (OriginalWidth > 800) {
+					width = 800;
+				} else {
+					width = OriginalWidth;
+				}
+
+				if (OriginalHeight > 1280) {
+					height = 1280;
+				} else {
+					height = OriginalHeight;
+				}
+			}
 
 			if (file == null) {
 				return Response.status(Status.NOT_FOUND).entity("File not found").build();
@@ -170,9 +190,10 @@ public class FileDownloadService {
 			}
 			logger.info("[files-api] Resized File: {}.", resizedFile.getName());
 			String detactedContentType = tika.detect(resizedFile.getName());
-                        String contentType = preserve ? detactedContentType : format.equalsIgnoreCase("webp") ? "image/webp" : detactedContentType;
+			String contentType = preserve ? detactedContentType
+					: format.equalsIgnoreCase("webp") ? "image/webp" : detactedContentType;
 
-                        return FileUtil.fromFileToStream(resizedFile, contentType);
+			return FileUtil.fromFileToStream(resizedFile, contentType);
 		} catch (FileNotFoundException fe) {
 			logger.error(fe.getMessage());
 			return Response.status(Status.NOT_FOUND).build();
@@ -187,11 +208,11 @@ public class FileDownloadService {
 			String inputFile = storageBasePath + File.separatorChar + directory + File.separatorChar + fileName;
 			File file = AppUtil.findFile(inputFile);
 			if (file == null) {
-                            return Response.status(Status.NOT_FOUND).entity("File not found").build();
+				return Response.status(Status.NOT_FOUND).entity("File not found").build();
 			}
 			Tika tika = new Tika();
 			String contentType = tika.detect(file.getName());
-                        return FileUtil.fromFileToStream(file, contentType);
+			return FileUtil.fromFileToStream(file, contentType);
 		} catch (FileNotFoundException fe) {
 			logger.error(fe.getMessage());
 			return Response.status(Status.NOT_FOUND).build();
@@ -225,19 +246,19 @@ public class FileDownloadService {
 			File resizedFile;
 			Tika tika = new Tika();
 			if (!thumbnailFile.exists()) {
-                            File folders = new File(thumbnailFolder);
-                            folders.mkdirs();
-                            boolean fileGenerated = AppUtil.generateFile(command);
-                            logger.info("[files-api] Generated? {}.", fileGenerated);
-                            resizedFile = fileGenerated ? AppUtil.getResizedImage(command) : new File(file.toURI());
-                            logger.info("[files-api] Resized? {}.", resizedFile);
+				File folders = new File(thumbnailFolder);
+				folders.mkdirs();
+				boolean fileGenerated = AppUtil.generateFile(command);
+				logger.info("[files-api] Generated? {}.", fileGenerated);
+				resizedFile = fileGenerated ? AppUtil.getResizedImage(command) : new File(file.toURI());
+				logger.info("[files-api] Resized? {}.", resizedFile);
 			} else {
-                            logger.info("[files-api] File Exists: {}.", thumbnailFile.getName());
-                            resizedFile = thumbnailFile;
+				logger.info("[files-api] File Exists: {}.", thumbnailFile.getName());
+				resizedFile = thumbnailFile;
 			}
 			String contentType = tika.detect(resizedFile.getName());
 
-                        return FileUtil.fromFileToStream(resizedFile, contentType);
+			return FileUtil.fromFileToStream(resizedFile, contentType);
 		} catch (FileNotFoundException fe) {
 			logger.error(fe.getMessage());
 			return Response.status(Status.NOT_FOUND).build();

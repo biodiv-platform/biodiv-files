@@ -28,7 +28,7 @@ import java.nio.file.Paths;
 @Path(ApiContants.GET)
 @Api("Download")
 public class FileDownloadApi {
-    
+
 	private static final Logger logger = LoggerFactory.getLogger(FileDownloadApi.class);
 
 	@Inject
@@ -73,7 +73,34 @@ public class FileDownloadApi {
 		String userRequestedFormat = hAccept.contains("webp") && format.equalsIgnoreCase("webp") ? "webp"
 				: !format.equalsIgnoreCase("webp") ? format : "jpg";
 		return fileDownloadService.getImage(request, directory, fileName, width, height, userRequestedFormat, fit,
-				preserveFormat);
+				preserveFormat, false);
+	}
+
+	@Path("crop/plantnet/{directory:.+}/{fileName}")
+	@GET
+	@Consumes(MediaType.TEXT_PLAIN)
+	@ApiOperation(value = "Get the image resource with custom height & width by url", response = StreamingOutput.class)
+	public Response getImageResizedForPlantnet(@Context HttpServletRequest request,
+			@PathParam("directory") String directory, @PathParam("fileName") String fileName,
+			@DefaultValue("webp") @QueryParam("fm") String format, @DefaultValue("") @QueryParam("fit") String fit,
+			@DefaultValue("false") @QueryParam("preserve") String presereve) throws UnsupportedEncodingException {
+		fileName = URLDecoder.decode(fileName, StandardCharsets.UTF_8.name());
+//		if (height == null && width == null) {
+//			return Response.status(Status.BAD_REQUEST).entity("Height or Width required").build();
+//		}
+
+		if (directory.contains("..") || fileName.contains("..")) {
+			return Response.status(Status.NOT_ACCEPTABLE).build();
+		}
+		if (directory == null || directory.isEmpty() || fileName == null || fileName.isEmpty()) {
+			return Response.status(Status.BAD_REQUEST).build();
+		}
+		String hAccept = request.getHeader(HttpHeaders.ACCEPT);
+		boolean preserveFormat = Boolean.parseBoolean(presereve);
+		String userRequestedFormat = hAccept.contains("webp") && format.equalsIgnoreCase("webp") ? "webp"
+				: !format.equalsIgnoreCase("webp") ? format : "jpg";
+		return fileDownloadService.getImage(request, directory, fileName, null, null, userRequestedFormat, fit,
+				preserveFormat, true);
 	}
 
 	@GET
@@ -97,7 +124,7 @@ public class FileDownloadApi {
 
 			String fileExtension = com.google.common.io.Files.getFileExtension(fileName);
 			return fileDownloadService.getImage(request, directory, fileName, width, height, fileExtension, "center",
-					true);
+					true, false);
 
 		} catch (Exception e) {
 			return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
@@ -107,8 +134,8 @@ public class FileDownloadApi {
 	@Path("raw/{directory:.+}/{fileName}")
 	@GET
 	@ApiOperation(value = "Get the raw resource", response = StreamingOutput.class)
-	public Response getRawResource(@PathParam("directory") String directory, @PathParam("fileName") String fileName) throws UnsupportedEncodingException
-			 {
+	public Response getRawResource(@PathParam("directory") String directory, @PathParam("fileName") String fileName)
+			throws UnsupportedEncodingException {
 		fileName = URLDecoder.decode(fileName, StandardCharsets.UTF_8.name());
 		if (directory.contains("..") || fileName.contains("..")) {
 			return Response.status(Status.NOT_ACCEPTABLE).build();
@@ -154,7 +181,7 @@ public class FileDownloadApi {
 					new LinkOption[] { LinkOption.NOFOLLOW_LINKS }))
 				return accessService.genericFileDownload(path + File.separator + fileName);
 		} catch (IOException e) {
-			 logger.error(e.getMessage());
+			logger.error(e.getMessage());
 			return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
 
 		}
