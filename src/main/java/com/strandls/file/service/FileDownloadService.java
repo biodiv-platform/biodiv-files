@@ -40,9 +40,8 @@ public class FileDownloadService {
 			logger.error(e.getMessage());
 		}
 
-		// storageBasePath = properties.getProperty("storage_dir",
-		// "/home/apps/biodiv-image");
-		storageBasePath = "/home/prakhar/plant/";
+		storageBasePath = properties.getProperty("storage_dir", "/home/apps/biodiv-image");
+		
 	}
 
 	public Response getFile(String hashKey, String fileName, String imageVariation) throws IOException {
