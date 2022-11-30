@@ -192,7 +192,7 @@ public class FileDownloadService {
 			String contentType = preserve ? detactedContentType
 					: format.equalsIgnoreCase("webp") ? "image/webp" : detactedContentType;
 			if (isPlantnet == true) {
-				return FileUtil.fromFileToStream(resizedFile, tika.detect(resizedFile.getName()));
+				return FileUtil.fromFileToStream(resizedFile, "image/jpeg");
 			}
 
 			return FileUtil.fromFileToStream(resizedFile, contentType);
