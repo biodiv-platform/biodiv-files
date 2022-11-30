@@ -41,7 +41,7 @@ public class FileDownloadService {
 		}
 
 		storageBasePath = properties.getProperty("storage_dir", "/home/apps/biodiv-image");
-		
+
 	}
 
 	public Response getFile(String hashKey, String fileName, String imageVariation) throws IOException {
@@ -191,6 +191,9 @@ public class FileDownloadService {
 			String detactedContentType = tika.detect(resizedFile.getName());
 			String contentType = preserve ? detactedContentType
 					: format.equalsIgnoreCase("webp") ? "image/webp" : detactedContentType;
+			if (isPlantnet == true) {
+				return FileUtil.fromFileToStream(resizedFile, tika.detect(resizedFile.getName()));
+			}
 
 			return FileUtil.fromFileToStream(resizedFile, contentType);
 		} catch (FileNotFoundException fe) {
