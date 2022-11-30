@@ -174,8 +174,15 @@ public class FileDownloadService {
 			String thumbnailFolder = storageBasePath + File.separatorChar + BASE_FOLDERS.thumbnails.getFolder()
 					+ file.getParentFile().getAbsolutePath().substring(storageBasePath.length());
 			String command = null;
+
 			command = AppUtil.generateCommand(file.getAbsolutePath(), thumbnailFolder, width, height,
 					preserve ? extension : format, null, fit);
+
+			if (isPlantnet == true) {
+				command = AppUtil.generateCommand(file.getAbsolutePath(), thumbnailFolder, width, height, "jpg", null,
+						fit);
+			}
+
 			File thumbnailFile = AppUtil.getResizedImage(command);
 			File resizedFile;
 			Tika tika = new Tika();
