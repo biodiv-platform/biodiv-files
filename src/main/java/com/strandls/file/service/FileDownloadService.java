@@ -212,6 +212,80 @@ public class FileDownloadService {
 		}
 	}
 
+	public Response getImagePlantnet(String directory, String fileName, Integer width, Integer height, String format,
+			String fit, boolean preserve, boolean isPlantnet) {
+		try {
+
+			String dirPath = storageBasePath + File.separatorChar + directory + File.separatorChar;
+			String fileLocation = dirPath + fileName;
+			File file = AppUtil.findFile(fileLocation);
+
+			BufferedImage bimg = ImageIO.read(file);
+			int OriginalWidth = bimg.getWidth();
+			int OriginalHeight = bimg.getHeight();
+
+			if (isPlantnet == true) {
+				if (OriginalWidth > 800) {
+					width = 800;
+				} else {
+					width = OriginalWidth;
+				}
+
+				if (OriginalHeight > 1280) {
+					height = 1280;
+				} else {
+					height = OriginalHeight;
+				}
+			}
+
+			if (file == null) {
+				return Response.status(Status.NOT_FOUND).entity("File not found").build();
+			}
+
+			String name = file.getName();
+
+			String extension = name.substring(name.indexOf(".") + 1);
+			String thumbnailFolder = storageBasePath + File.separatorChar + BASE_FOLDERS.thumbnails.getFolder()
+					+ file.getParentFile().getAbsolutePath().substring(storageBasePath.length());
+			String command = null;
+
+			command = AppUtil.generateCommand(file.getAbsolutePath(), thumbnailFolder, width, height,
+					preserve ? extension : format, null, fit);
+
+			if (isPlantnet == true) {
+				command = AppUtil.generateCommand(file.getAbsolutePath(), thumbnailFolder, width, height, "jpg", null,
+						fit);
+			}
+
+			File thumbnailFile = AppUtil.getResizedImage(command);
+			File resizedFile;
+			Tika tika = new Tika();
+			if (!thumbnailFile.exists()) {
+				File folders = new File(thumbnailFolder);
+				folders.mkdirs();
+				boolean fileGenerated = AppUtil.generateFile(command);
+				resizedFile = fileGenerated ? AppUtil.getResizedImage(command) : new File(file.toURI());
+			} else {
+				resizedFile = thumbnailFile;
+			}
+			logger.info("[files-api] Resized File: {}.", resizedFile.getName());
+			String detactedContentType = tika.detect(resizedFile.getName());
+			String contentType = preserve ? detactedContentType
+					: format.equalsIgnoreCase("webp") ? "image/webp" : detactedContentType;
+			if (isPlantnet == true) {
+				return FileUtil.fromFileToStream(resizedFile, "image/jpeg");
+			}
+
+			return FileUtil.fromFileToStream(resizedFile, contentType);
+		} catch (FileNotFoundException fe) {
+			logger.error(fe.getMessage());
+			return Response.status(Status.NOT_FOUND).build();
+		} catch (Exception ex) {
+			logger.error(ex.getMessage());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+		}
+	}
+
 	public Response getRawResource(String directory, String fileName) {
 		try {
 			String inputFile = storageBasePath + File.separatorChar + directory + File.separatorChar + fileName;

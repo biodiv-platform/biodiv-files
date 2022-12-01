@@ -80,9 +80,9 @@ public class FileDownloadApi {
 	@GET
 	@Consumes(MediaType.TEXT_PLAIN)
 	@ApiOperation(value = "Get the image resource with custom height & width by url", response = StreamingOutput.class)
-	public Response getImageResizedForPlantnet(@Context HttpServletRequest request,
-			@PathParam("directory") String directory, @PathParam("fileName") String fileName,
-			@DefaultValue("webp") @QueryParam("fm") String format, @DefaultValue("") @QueryParam("fit") String fit,
+	public Response getImageResizedForPlantnet(@PathParam("directory") String directory,
+			@PathParam("fileName") String fileName, @DefaultValue("webp") @QueryParam("fm") String format,
+			@DefaultValue("") @QueryParam("fit") String fit,
 			@DefaultValue("false") @QueryParam("preserve") String presereve) throws UnsupportedEncodingException {
 		fileName = URLDecoder.decode(fileName, StandardCharsets.UTF_8.name());
 //		if (height == null && width == null) {
@@ -95,12 +95,11 @@ public class FileDownloadApi {
 		if (directory == null || directory.isEmpty() || fileName == null || fileName.isEmpty()) {
 			return Response.status(Status.BAD_REQUEST).build();
 		}
-		String hAccept = request.getHeader(HttpHeaders.ACCEPT);
-		boolean preserveFormat = Boolean.parseBoolean(presereve);
-		String userRequestedFormat = hAccept.contains("webp") && format.equalsIgnoreCase("webp") ? "webp"
-				: !format.equalsIgnoreCase("webp") ? format : "jpg";
-		return fileDownloadService.getImage(request, directory, fileName, null, null, userRequestedFormat, fit,
-				preserveFormat, true);
+		// String hAccept = request.getHeader(HttpHeaders.ACCEPT);
+		// boolean preserveFormat = Boolean.parseBoolean(presereve);
+//		String userRequestedFormat = hAccept.contains("webp") && format.equalsIgnoreCase("webp") ? "webp"
+//				: !format.equalsIgnoreCase("webp") ? format : "jpg";
+		return fileDownloadService.getImagePlantnet(directory, fileName, null, null, "jpg", fit, true, true);
 	}
 
 	@GET
