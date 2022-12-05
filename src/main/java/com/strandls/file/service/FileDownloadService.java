@@ -139,30 +139,12 @@ public class FileDownloadService {
 	}
 
 	public Response getImage(HttpServletRequest req, String directory, String fileName, Integer width, Integer height,
-			String format, String fit, boolean preserve, boolean isPlantnet) {
+			String format, String fit, boolean preserve) {
 		try {
 
 			String dirPath = storageBasePath + File.separatorChar + directory + File.separatorChar;
 			String fileLocation = dirPath + fileName;
 			File file = AppUtil.findFile(fileLocation);
-
-			BufferedImage bimg = ImageIO.read(file);
-			int OriginalWidth = bimg.getWidth();
-			int OriginalHeight = bimg.getHeight();
-
-			if (isPlantnet == true) {
-				if (OriginalWidth > 800) {
-					width = 800;
-				} else {
-					width = OriginalWidth;
-				}
-
-				if (OriginalHeight > 1280) {
-					height = 1280;
-				} else {
-					height = OriginalHeight;
-				}
-			}
 
 			if (file == null) {
 				return Response.status(Status.NOT_FOUND).entity("File not found").build();
@@ -177,11 +159,6 @@ public class FileDownloadService {
 
 			command = AppUtil.generateCommand(file.getAbsolutePath(), thumbnailFolder, width, height,
 					preserve ? extension : format, null, fit);
-
-			if (isPlantnet == true) {
-				command = AppUtil.generateCommand(file.getAbsolutePath(), thumbnailFolder, width, height, "jpg", null,
-						fit);
-			}
 
 			File thumbnailFile = AppUtil.getResizedImage(command);
 			File resizedFile;
@@ -198,9 +175,6 @@ public class FileDownloadService {
 			String detactedContentType = tika.detect(resizedFile.getName());
 			String contentType = preserve ? detactedContentType
 					: format.equalsIgnoreCase("webp") ? "image/webp" : detactedContentType;
-			if (isPlantnet == true) {
-				return FileUtil.fromFileToStream(resizedFile, "image/jpeg");
-			}
 
 			return FileUtil.fromFileToStream(resizedFile, contentType);
 		} catch (FileNotFoundException fe) {
