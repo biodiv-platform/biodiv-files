@@ -157,17 +157,19 @@ public class FileDownloadService {
 			String command = null;
 			command = AppUtil.generateCommand(file.getAbsolutePath(), thumbnailFolder, width, height,
 					preserve ? extension : format, null, fit);
-			File thumbnailFile = AppUtil.getResizedImage(command);
-			File resizedFile;
+			File resizedFile=getResizedFile(command, thumbnailFolder, file);
 			Tika tika = new Tika();
-			if (!thumbnailFile.exists()) {
-				File folders = new File(thumbnailFolder);
-				folders.mkdirs();
-				boolean fileGenerated = AppUtil.generateFile(command);
-				resizedFile = fileGenerated ? AppUtil.getResizedImage(command) : new File(file.toURI());
-			} else {
-				resizedFile = thumbnailFile;
-			}
+//			File thumbnailFile = AppUtil.getResizedImage(command);
+//			File resizedFile;
+//			Tika tika = new Tika();
+//			if (!thumbnailFile.exists()) {
+//				File folders = new File(thumbnailFolder);
+//				folders.mkdirs();
+//				boolean fileGenerated = AppUtil.generateFile(command);
+//				resizedFile = fileGenerated ? AppUtil.getResizedImage(command) : new File(file.toURI());
+//			} else {
+//				resizedFile = thumbnailFile;
+//			}
 			String detactedContentType = tika.detect(resizedFile.getName());
                         String contentType = preserve ? detactedContentType : format.equalsIgnoreCase("webp") ? "image/webp" : detactedContentType;
 
@@ -181,10 +183,25 @@ public class FileDownloadService {
 		}
 	}
 	
+	private File getResizedFile(String command,String thumbnailFolder,File file) {
+		File thumbnailFile = AppUtil.getResizedImage(command);
+		File resizedFile;
+		if (!thumbnailFile.exists()) {
+			File folders = new File(thumbnailFolder);
+			folders.mkdirs();
+			boolean fileGenerated = AppUtil.generateFile(command);
+			resizedFile = fileGenerated ? AppUtil.getResizedImage(command) : new File(file.toURI());
+		} else {
+			resizedFile = thumbnailFile;
+		}
+		return resizedFile;
+	}
+	
 	public Response getImagePlantnet(String directory, String fileName, Integer width, Integer height, String format,
 			String fit, boolean preserve, boolean isPlantnet) {
 		try {
-
+			
+			
 			String dirPath = storageBasePath + File.separatorChar + directory + File.separatorChar;
 			String fileLocation = dirPath + fileName;
 			File file = AppUtil.findFile(fileLocation);
@@ -225,18 +242,8 @@ public class FileDownloadService {
 				command = AppUtil.generateCommand(file.getAbsolutePath(), thumbnailFolder, width, height, "jpg", null,
 						fit);
 			}
-
-			File thumbnailFile = AppUtil.getResizedImage(command);
-			File resizedFile;
+			File resizedFile=getResizedFile(command, thumbnailFolder,file);
 			Tika tika = new Tika();
-			if (!thumbnailFile.exists()) {
-				File folders = new File(thumbnailFolder);
-				folders.mkdirs();
-				boolean fileGenerated = AppUtil.generateFile(command);
-				resizedFile = fileGenerated ? AppUtil.getResizedImage(command) : new File(file.toURI());
-			} else {
-				resizedFile = thumbnailFile;
-			}
 			logger.info("[files-api] Resized File: {}.", resizedFile.getName());
 			String detactedContentType = tika.detect(resizedFile.getName());
 			String contentType = preserve ? detactedContentType
@@ -292,17 +299,19 @@ public class FileDownloadService {
 					+ file.getParentFile().getAbsolutePath().substring(storageBasePath.length());
 			String command = null;
 			command = AppUtil.generateCommandLogo(file.getAbsolutePath(), thumbnailFolder, width, height, extension);
-			File thumbnailFile = AppUtil.getResizedImage(command);
-			File resizedFile;
-			Tika tika = new Tika();
-			if (!thumbnailFile.exists()) {
-                            File folders = new File(thumbnailFolder);
-                            folders.mkdirs();
-                            boolean fileGenerated = AppUtil.generateFile(command);
-                            resizedFile = fileGenerated ? AppUtil.getResizedImage(command) : new File(file.toURI());
-			} else {
-                            resizedFile = thumbnailFile;
-			}
+		    File resizedFile=getResizedFile(command, thumbnailFolder, file);
+		    Tika tika = new Tika();
+//			File thumbnailFile = AppUtil.getResizedImage(command);
+//			File resizedFile;
+//			Tika tika = new Tika();
+//			if (!thumbnailFile.exists()) {
+//                            File folders = new File(thumbnailFolder);
+//                            folders.mkdirs();
+//                            boolean fileGenerated = AppUtil.generateFile(command);
+//                            resizedFile = fileGenerated ? AppUtil.getResizedImage(command) : new File(file.toURI());
+//			} else {
+//                            resizedFile = thumbnailFile;
+//			}
 			String contentType = tika.detect(resizedFile.getName());
 
                         return FileUtil.fromFileToStream(resizedFile, contentType);
