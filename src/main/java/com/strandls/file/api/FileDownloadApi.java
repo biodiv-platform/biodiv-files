@@ -93,7 +93,7 @@ public class FileDownloadApi {
 			return Response.status(Status.BAD_REQUEST).build();
 		}
 
-		return fileDownloadService.getImagePlantnet(directory, fileName, null, null, "jpg", fit, true, true);
+		return fileDownloadService.getImagePlantnet(directory, fileName, "jpg", fit, true, true);
 	}
 
 	@GET

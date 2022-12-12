@@ -186,7 +186,7 @@ public class FileDownloadService {
 		return resizedFile;
 	}
 	
-	public Response getImagePlantnet(String directory, String fileName, Integer width, Integer height, String format,
+	public Response getImagePlantnet(String directory, String fileName, String format,
 			String fit, boolean preserve, boolean isPlantnet) {
 		try {
 			
@@ -199,16 +199,19 @@ public class FileDownloadService {
 			int originalWidth = bimg.getWidth();
 			int originalHeight = bimg.getHeight();
 			
+			Integer requiredWidth;
+			Integer requiredHeight;
+			
 			if (originalWidth > 800) {
-				width = 800;
+				requiredWidth = 800;
 			} else {
-				width = originalWidth;
+				requiredWidth = originalWidth;
 			}
 			
 			if (originalHeight > 1280) {
-				height = 1280;
+				requiredHeight = 1280;
 			} else {
-				height = originalHeight;
+				requiredHeight = originalHeight;
 			}
 
 			if (file == null) {
@@ -222,9 +225,9 @@ public class FileDownloadService {
 					+ file.getParentFile().getAbsolutePath().substring(storageBasePath.length());
 			String command = null;
 
-			command = AppUtil.generateCommand(file.getAbsolutePath(), thumbnailFolder, width, height,
+			command = AppUtil.generateCommand(file.getAbsolutePath(), thumbnailFolder, requiredWidth, requiredHeight,
 					preserve ? extension : format, null, fit);
-			command = AppUtil.generateCommand(file.getAbsolutePath(), thumbnailFolder, width, height, "jpg", null,
+			command = AppUtil.generateCommand(file.getAbsolutePath(), thumbnailFolder, requiredWidth, requiredHeight, "jpg", null,
 						fit);
 			File resizedFile=getResizedFile(command, thumbnailFolder,file);
 			logger.info("[files-api] Resized File: {}.", resizedFile.getName());
