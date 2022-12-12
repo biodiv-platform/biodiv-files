@@ -186,8 +186,7 @@ public class FileDownloadService {
 		return resizedFile;
 	}
 	
-	public Response getImagePlantnet(String directory, String fileName, String format,
-			String fit, boolean preserve, boolean isPlantnet) {
+	public Response getImagePlantnet(String directory, String fileName, String fit) {
 		try {
 			
 			
@@ -218,15 +217,10 @@ public class FileDownloadService {
 				return Response.status(Status.NOT_FOUND).entity("File not found").build();
 			}
 
-			String name = file.getName();
-
-			String extension = name.substring(name.indexOf(".") + 1);
 			String thumbnailFolder = storageBasePath + File.separatorChar + BASE_FOLDERS.thumbnails.getFolder()
 					+ file.getParentFile().getAbsolutePath().substring(storageBasePath.length());
 			String command = null;
 
-			command = AppUtil.generateCommand(file.getAbsolutePath(), thumbnailFolder, requiredWidth, requiredHeight,
-					preserve ? extension : format, null, fit);
 			command = AppUtil.generateCommand(file.getAbsolutePath(), thumbnailFolder, requiredWidth, requiredHeight, "jpg", null,
 						fit);
 			File resizedFile=getResizedFile(command, thumbnailFolder,file);
