@@ -75,6 +75,26 @@ public class FileDownloadApi {
 		return fileDownloadService.getImage(request, directory, fileName, width, height, userRequestedFormat, fit,
 				preserveFormat);
 	}
+	
+	@Path("crop/plantnet/{directory:.+}/{fileName}")
+	@GET
+	@Consumes(MediaType.TEXT_PLAIN)
+	@ApiOperation(value = "Get the image resource with custom height & width by url", response = StreamingOutput.class)
+	public Response getImageResizedForPlantnet(@PathParam("directory") String directory,
+			@PathParam("fileName") String fileName, @DefaultValue("webp") @QueryParam("fm") String format,
+			@DefaultValue("") @QueryParam("fit") String fit,
+			@DefaultValue("false") @QueryParam("preserve") String presereve) throws UnsupportedEncodingException {
+		fileName = URLDecoder.decode(fileName, StandardCharsets.UTF_8.name());
+
+		if (directory.contains("..") || fileName.contains("..")) {
+			return Response.status(Status.NOT_ACCEPTABLE).build();
+		}
+		if (directory == null || directory.isEmpty() || fileName == null || fileName.isEmpty()) {
+			return Response.status(Status.BAD_REQUEST).build();
+		}
+
+		return fileDownloadService.getImagePlantnet(directory, fileName, fit);
+	}
 
 	@GET
 	@Path(ApiContants.ICON + "/{height}/{width}/{directory:.+}/{fileName}")
