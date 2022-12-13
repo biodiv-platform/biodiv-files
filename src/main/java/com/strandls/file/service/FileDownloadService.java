@@ -157,21 +157,75 @@ public class FileDownloadService {
 			String command = null;
 			command = AppUtil.generateCommand(file.getAbsolutePath(), thumbnailFolder, width, height,
 					preserve ? extension : format, null, fit);
-			File thumbnailFile = AppUtil.getResizedImage(command);
-			File resizedFile;
+			File resizedFile=getResizedFile(command, thumbnailFolder, file);
 			Tika tika = new Tika();
-			if (!thumbnailFile.exists()) {
-				File folders = new File(thumbnailFolder);
-				folders.mkdirs();
-				boolean fileGenerated = AppUtil.generateFile(command);
-				resizedFile = fileGenerated ? AppUtil.getResizedImage(command) : new File(file.toURI());
-			} else {
-				resizedFile = thumbnailFile;
-			}
 			String detactedContentType = tika.detect(resizedFile.getName());
                         String contentType = preserve ? detactedContentType : format.equalsIgnoreCase("webp") ? "image/webp" : detactedContentType;
 
                         return FileUtil.fromFileToStream(resizedFile, contentType);
+		} catch (FileNotFoundException fe) {
+			logger.error(fe.getMessage());
+			return Response.status(Status.NOT_FOUND).build();
+		} catch (Exception ex) {
+			logger.error(ex.getMessage());
+			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+		}
+	}
+	
+	private File getResizedFile(String command,String thumbnailFolder,File file) {
+		File thumbnailFile = AppUtil.getResizedImage(command);
+		File resizedFile;
+		if (!thumbnailFile.exists()) {
+			File folders = new File(thumbnailFolder);
+			folders.mkdirs();
+			boolean fileGenerated = AppUtil.generateFile(command);
+			resizedFile = fileGenerated ? AppUtil.getResizedImage(command) : new File(file.toURI());
+		} else {
+			resizedFile = thumbnailFile;
+		}
+		return resizedFile;
+	}
+	
+	public Response getImagePlantnet(String directory, String fileName, String fit) {
+		try {
+			
+			
+			String dirPath = storageBasePath + File.separatorChar + directory + File.separatorChar;
+			String fileLocation = dirPath + fileName;
+			File file = AppUtil.findFile(fileLocation);
+
+			BufferedImage bimg = ImageIO.read(file);
+			int originalWidth = bimg.getWidth();
+			int originalHeight = bimg.getHeight();
+			
+			Integer requiredWidth;
+			Integer requiredHeight;
+			
+			if (originalWidth > 800) {
+				requiredWidth = 800;
+			} else {
+				requiredWidth = originalWidth;
+			}
+			
+			if (originalHeight > 1280) {
+				requiredHeight = 1280;
+			} else {
+				requiredHeight = originalHeight;
+			}
+
+			if (file == null) {
+				return Response.status(Status.NOT_FOUND).entity("File not found").build();
+			}
+
+			String thumbnailFolder = storageBasePath + File.separatorChar + BASE_FOLDERS.thumbnails.getFolder()
+					+ file.getParentFile().getAbsolutePath().substring(storageBasePath.length());
+			String command = null;
+
+			command = AppUtil.generateCommand(file.getAbsolutePath(), thumbnailFolder, requiredWidth, requiredHeight, "jpg", null,
+						fit);
+			File resizedFile=getResizedFile(command, thumbnailFolder,file);
+			logger.info("[files-api] Resized File: {}.", resizedFile.getName());
+			return FileUtil.fromFileToStream(resizedFile, "image/jpeg");
 		} catch (FileNotFoundException fe) {
 			logger.error(fe.getMessage());
 			return Response.status(Status.NOT_FOUND).build();
@@ -218,17 +272,8 @@ public class FileDownloadService {
 					+ file.getParentFile().getAbsolutePath().substring(storageBasePath.length());
 			String command = null;
 			command = AppUtil.generateCommandLogo(file.getAbsolutePath(), thumbnailFolder, width, height, extension);
-			File thumbnailFile = AppUtil.getResizedImage(command);
-			File resizedFile;
-			Tika tika = new Tika();
-			if (!thumbnailFile.exists()) {
-                            File folders = new File(thumbnailFolder);
-                            folders.mkdirs();
-                            boolean fileGenerated = AppUtil.generateFile(command);
-                            resizedFile = fileGenerated ? AppUtil.getResizedImage(command) : new File(file.toURI());
-			} else {
-                            resizedFile = thumbnailFile;
-			}
+		    File resizedFile=getResizedFile(command, thumbnailFolder, file);
+		    Tika tika = new Tika();
 			String contentType = tika.detect(resizedFile.getName());
 
                         return FileUtil.fromFileToStream(resizedFile, contentType);
