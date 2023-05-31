@@ -41,7 +41,7 @@ public class AppUtil {
 		ALLOWED_CONTENT_TYPES.put(MODULE.DOCUMENT, Arrays.asList("pdf"));
 		ALLOWED_CONTENT_TYPES.put(MODULE.SPECIES, Arrays.asList("image", "video", "audio"));
 		ALLOWED_CONTENT_TYPES.put(MODULE.DATASETS, Arrays.asList("vnd.ms-excel", "spreadsheetml.sheet", "csv"));
-		ALLOWED_CONTENT_TYPES.put(MODULE.CURATION,Arrays.asList("csv"));
+		ALLOWED_CONTENT_TYPES.put(MODULE.CURATION, Arrays.asList("csv"));
 	};
 
 	public enum MODULE {
@@ -54,11 +54,11 @@ public class AppUtil {
 
 	public static enum BASE_FOLDERS {
 		observations("observations"), img("img"), species("species"), userGroups("userGroups"), users("users"),
-		pages("pages"),signature("signature"), traits("traits"), myUploads("myUploads"), thumbnails("thumbnails"), landscape("landscape"),
-		documents(String.join(String.valueOf(File.separatorChar), "content", "documents")), temp("temp"),
-		datatables(String.join(String.valueOf(File.separatorChar), "content", "dataTables")),
+		pages("pages"), signature("signature"), traits("traits"), myUploads("myUploads"), thumbnails("thumbnails"),
+		landscape("landscape"), documents(String.join(String.valueOf(File.separatorChar), "content", "documents")),
+		temp("temp"), datatables(String.join(String.valueOf(File.separatorChar), "content", "dataTables")),
 		datasets(String.join(String.valueOf(File.separatorChar), "content", "datasets")),
-		curation(String.join(String.valueOf(File.separatorChar), "content", "curation"));
+		curation(String.join(String.valueOf(File.separatorChar), "content", "curation")), homePage("homePage");
 
 		private String folder;
 
