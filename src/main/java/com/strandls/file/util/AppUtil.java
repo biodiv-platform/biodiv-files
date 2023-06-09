@@ -42,10 +42,11 @@ public class AppUtil {
 		ALLOWED_CONTENT_TYPES.put(MODULE.SPECIES, Arrays.asList("image", "video", "audio"));
 		ALLOWED_CONTENT_TYPES.put(MODULE.DATASETS, Arrays.asList("vnd.ms-excel", "spreadsheetml.sheet", "csv"));
 		ALLOWED_CONTENT_TYPES.put(MODULE.CURATION, Arrays.asList("csv"));
+		ALLOWED_CONTENT_TYPES.put(MODULE.RESOURCE, Arrays.asList("image", "video", "audio"));
 	};
 
 	public enum MODULE {
-		OBSERVATION, SPECIES, DOCUMENT, DATASETS, CURATION
+		OBSERVATION, SPECIES, DOCUMENT, DATASETS, CURATION, RESOURCE
 	}
 
 	public enum FILE_UPLOAD_TYPES {
@@ -58,7 +59,8 @@ public class AppUtil {
 		landscape("landscape"), documents(String.join(String.valueOf(File.separatorChar), "content", "documents")),
 		temp("temp"), datatables(String.join(String.valueOf(File.separatorChar), "content", "dataTables")),
 		datasets(String.join(String.valueOf(File.separatorChar), "content", "datasets")),
-		curation(String.join(String.valueOf(File.separatorChar), "content", "curation")), homePage("homePage");
+		curation(String.join(String.valueOf(File.separatorChar), "content", "curation")), homePage("homePage"),
+		resources("resources");
 
 		private String folder;
 
