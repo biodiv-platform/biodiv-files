@@ -31,21 +31,25 @@ import net.lingala.zip4j.model.FileHeader;
 public class AppUtil {
 	private static final List<String> PREVENTIVE_TOKENS = Arrays.asList("&", "|", "`", "$", ";");
 	private static final int QUALITY = 90;
+	private static final String IMAGE = "image";
+	private static final String VIDEO = "video";
+	private static final String AUDIO = "audio";
 
 	private static final Logger logger = LoggerFactory.getLogger(AppUtil.class);
 
 	public static final Map<MODULE, List<String>> ALLOWED_CONTENT_TYPES = new HashMap<>();
 
 	static {
-		ALLOWED_CONTENT_TYPES.put(MODULE.OBSERVATION, Arrays.asList("image", "video", "audio"));
+		ALLOWED_CONTENT_TYPES.put(MODULE.OBSERVATION, Arrays.asList(IMAGE, VIDEO, AUDIO));
 		ALLOWED_CONTENT_TYPES.put(MODULE.DOCUMENT, Arrays.asList("pdf"));
-		ALLOWED_CONTENT_TYPES.put(MODULE.SPECIES, Arrays.asList("image", "video", "audio"));
+		ALLOWED_CONTENT_TYPES.put(MODULE.SPECIES, Arrays.asList(IMAGE, VIDEO, AUDIO));
 		ALLOWED_CONTENT_TYPES.put(MODULE.DATASETS, Arrays.asList("vnd.ms-excel", "spreadsheetml.sheet", "csv"));
 		ALLOWED_CONTENT_TYPES.put(MODULE.CURATION, Arrays.asList("csv"));
+		ALLOWED_CONTENT_TYPES.put(MODULE.RESOURCE, Arrays.asList(IMAGE, VIDEO, AUDIO));
 	};
 
 	public enum MODULE {
-		OBSERVATION, SPECIES, DOCUMENT, DATASETS, CURATION
+		OBSERVATION, SPECIES, DOCUMENT, DATASETS, CURATION, RESOURCE
 	}
 
 	public enum FILE_UPLOAD_TYPES {
@@ -58,7 +62,8 @@ public class AppUtil {
 		landscape("landscape"), documents(String.join(String.valueOf(File.separatorChar), "content", "documents")),
 		temp("temp"), datatables(String.join(String.valueOf(File.separatorChar), "content", "dataTables")),
 		datasets(String.join(String.valueOf(File.separatorChar), "content", "datasets")),
-		curation(String.join(String.valueOf(File.separatorChar), "content", "curation")), homePage("homePage");
+		curation(String.join(String.valueOf(File.separatorChar), "content", "curation")), homePage("homePage"),
+		resources("resources");
 
 		private String folder;
 
