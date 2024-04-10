@@ -63,7 +63,7 @@ public class AppUtil {
 		temp("temp"), datatables(String.join(String.valueOf(File.separatorChar), "content", "dataTables")),
 		datasets(String.join(String.valueOf(File.separatorChar), "content", "datasets")),
 		curation(String.join(String.valueOf(File.separatorChar), "content", "curation")), homePage("homePage"),
-		resources("resources");
+		resources("resources"), documentSocialPreview("documentSocialPreview");
 
 		private String folder;
 
