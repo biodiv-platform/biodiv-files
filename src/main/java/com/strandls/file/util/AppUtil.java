@@ -41,7 +41,7 @@ public class AppUtil {
 
 	static {
 		ALLOWED_CONTENT_TYPES.put(MODULE.OBSERVATION, Arrays.asList(IMAGE, VIDEO, AUDIO));
-		ALLOWED_CONTENT_TYPES.put(MODULE.DOCUMENT, Arrays.asList("pdf"));
+		ALLOWED_CONTENT_TYPES.put(MODULE.DOCUMENT, Arrays.asList("pdf", VIDEO));
 		ALLOWED_CONTENT_TYPES.put(MODULE.SPECIES, Arrays.asList(IMAGE, VIDEO, AUDIO));
 		ALLOWED_CONTENT_TYPES.put(MODULE.DATASETS, Arrays.asList("vnd.ms-excel", "spreadsheetml.sheet", "csv"));
 		ALLOWED_CONTENT_TYPES.put(MODULE.CURATION, Arrays.asList("csv"));
