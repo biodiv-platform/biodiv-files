@@ -92,14 +92,14 @@ public class FileUploadService {
 		}
 		String dirPath = storageBasePath + File.separatorChar + directory.getFolder() + File.separatorChar + folderName;
 		Tika tika = new Tika();
-		String probeContentType = tika.detect(fileName);
+		// String probeContentType = tika.detect(fileName);
 
-		if (probeContentType == null || !probeContentType.startsWith("image")) {
-			fileUploadModel.setError("Invalid file type. Only image type allowed.");
-			return fileUploadModel;
-		} else {
-			fileUploadModel.setType(probeContentType);
-		}
+		// if (probeContentType == null || !probeContentType.startsWith("image")) {
+		// 	fileUploadModel.setError("Invalid file type. Only image type allowed.");
+		// 	return fileUploadModel;
+		// } else {
+		// 	fileUploadModel.setType(probeContentType);
+		// }
 
 		String tempFileName = UUID.randomUUID().toString().replaceAll("-", "");
 		String generatedFileName = tempFileName + "." + fileExtension;
