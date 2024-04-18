@@ -113,10 +113,10 @@ public class FileUploadService {
 
 		fileUploadModel.setUploaded(uploaded);
 
-		if (probeContentType.startsWith("image")) {
-			Thread thread = new Thread(new ThumbnailUtil(filePath, dirPath, tempFileName, fileExtension));
-			thread.start();
-		}
+//		if (probeContentType.startsWith("image")) {
+//			Thread thread = new Thread(new ThumbnailUtil(filePath, dirPath, tempFileName, fileExtension));
+//			thread.start();
+//		}
 
 		if (uploaded) {
 			String resultPath = File.separatorChar + folderName + File.separatorChar + generatedFileName;
