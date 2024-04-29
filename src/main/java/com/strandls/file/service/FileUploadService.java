@@ -92,14 +92,15 @@ public class FileUploadService {
 		}
 		String dirPath = storageBasePath + File.separatorChar + directory.getFolder() + File.separatorChar + folderName;
 		Tika tika = new Tika();
-		// String probeContentType = tika.detect(fileName);
+		String probeContentType = tika.detect(fileName);
 
-		// if (probeContentType == null || !probeContentType.startsWith("image")) {
-		// 	fileUploadModel.setError("Invalid file type. Only image type allowed.");
-		// 	return fileUploadModel;
-		// } else {
-		// 	fileUploadModel.setType(probeContentType);
-		// }
+		if (probeContentType == null || !probeContentType.startsWith("image")
+				|| !probeContentType.startsWith("video")) {
+			fileUploadModel.setError("Invalid file type. Only image type allowed.");
+			return fileUploadModel;
+		} else {
+			fileUploadModel.setType(probeContentType);
+		}
 
 		String tempFileName = UUID.randomUUID().toString().replaceAll("-", "");
 		String generatedFileName = tempFileName + "." + fileExtension;
@@ -113,10 +114,10 @@ public class FileUploadService {
 
 		fileUploadModel.setUploaded(uploaded);
 
-//		if (probeContentType.startsWith("image")) {
-//			Thread thread = new Thread(new ThumbnailUtil(filePath, dirPath, tempFileName, fileExtension));
-//			thread.start();
-//		}
+		if (probeContentType.startsWith("image")) {
+			Thread thread = new Thread(new ThumbnailUtil(filePath, dirPath, tempFileName, fileExtension));
+			thread.start();
+		}
 
 		if (uploaded) {
 			String resultPath = File.separatorChar + folderName + File.separatorChar + generatedFileName;
