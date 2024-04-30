@@ -48,6 +48,7 @@ import com.strandls.file.util.ThumbnailUtil;
 
 public class FileUploadService {
 	private static final Logger logger = LoggerFactory.getLogger(FileUploadService.class);
+	private static final String IMAGE = "image";
 
 	@Inject
 	private UploadedMetaDataService uploadedMetaDataService;
@@ -94,8 +95,8 @@ public class FileUploadService {
 		Tika tika = new Tika();
 		String probeContentType = tika.detect(fileName);
 
-		if (probeContentType == null || !probeContentType.startsWith("image")) {
-			fileUploadModel.setError("Invalid file type. Only image type allowed.");
+		if (probeContentType == null || !(probeContentType.startsWith(IMAGE) || probeContentType.startsWith("video"))) {
+			fileUploadModel.setError("Invalid file type. Only image and video types allowed.");
 			return fileUploadModel;
 		} else {
 			fileUploadModel.setType(probeContentType);
@@ -113,7 +114,7 @@ public class FileUploadService {
 
 		fileUploadModel.setUploaded(uploaded);
 
-		if (probeContentType.startsWith("image")) {
+		if (probeContentType.startsWith(IMAGE)) {
 			Thread thread = new Thread(new ThumbnailUtil(filePath, dirPath, tempFileName, fileExtension));
 			thread.start();
 		}
@@ -172,7 +173,7 @@ public class FileUploadService {
 
 		fileUploadModel.setUploaded(uploaded);
 
-		if (probeContentType.startsWith("image")) {
+		if (probeContentType.startsWith(IMAGE)) {
 			Thread thread = new Thread(new ThumbnailUtil(filePath, dirPath, tempFileName, fileExtension));
 			thread.start();
 		}
@@ -239,7 +240,7 @@ public class FileUploadService {
 					.setPath(File.separatorChar + file.getParentFile().getName() + File.separatorChar + file.getName());
 			uploadModel.setType(probeContentType);
 			BasicFileAttributes attributes;
-			if (probeContentType.startsWith("image")) {
+			if (probeContentType.startsWith(IMAGE)) {
 				String exifData = AppUtil.getExifData(file.getAbsolutePath());
 				String[] data = exifData.split("\\*");
 				if (exifData != null && !exifData.isEmpty() && exifData.contains("*")) {
@@ -319,7 +320,7 @@ public class FileUploadService {
 				uploadModel.setHashKey(hash);
 				uploadModel.setFileName(tmpFile.getName());
 				BasicFileAttributes attributes = null;
-				if (probeContentType.startsWith("image")) {
+				if (probeContentType.startsWith(IMAGE)) {
 					String exifData = AppUtil.getExifData(tmpFile.getAbsolutePath());
 					if (exifData != null && !exifData.isEmpty() && exifData.contains("*")) {
 						String[] data = exifData.split("\\*");
@@ -385,7 +386,7 @@ public class FileUploadService {
 		uploadModel.setHashKey(tmpFile.getParentFile().getName());
 		uploadModel.setFileName(tmpFile.getName());
 		BasicFileAttributes attributes;
-		if (probeContentType.startsWith("image")) {
+		if (probeContentType.startsWith(IMAGE)) {
 			String exifData = AppUtil.getExifData(tmpFile.getAbsolutePath());
 			if (exifData != null && !exifData.isEmpty() && exifData.contains("*")) {
 				String[] data = exifData.split("\\*");
