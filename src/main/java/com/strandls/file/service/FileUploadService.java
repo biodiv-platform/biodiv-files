@@ -95,8 +95,9 @@ public class FileUploadService {
 		Tika tika = new Tika();
 		String probeContentType = tika.detect(fileName);
 
-		if (probeContentType == null || !(probeContentType.startsWith(IMAGE) || probeContentType.startsWith("video"))) {
-			fileUploadModel.setError("Invalid file type. Only image and video types allowed.");
+		if (probeContentType == null || !(probeContentType.startsWith(IMAGE) || probeContentType.startsWith("video")
+				|| probeContentType.startsWith("audio"))) {
+			fileUploadModel.setError("Invalid file type. Only image, video and audio types allowed.");
 			return fileUploadModel;
 		} else {
 			fileUploadModel.setType(probeContentType);
