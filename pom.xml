@@ -434,15 +434,7 @@
 				<executions>
 					<execution>
 						<id>attach-javadocs</id>
-						<phase>package</phase>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-						<configuration>
-							<doclint>none</doclint>
-							<failOnError>false</failOnError>
-							<additionalJOption>-Xdoclint:none</additionalJOption>
-						</configuration>
+						<phase>none</phase>
 					</execution>
 				</executions>
 			</plugin>
