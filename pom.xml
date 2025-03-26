@@ -12,7 +12,7 @@
 	<properties>
 		<!-- Code -->
 		<org.pac4j.version>5.7.1</org.pac4j.version>
-		<jax-rs-pac4j.version>5.0.1</jax-rs-pac4j.version>
+		<jax-rs-pac4j.version>7.0.1</jax-rs-pac4j.version>
 
 
 		<postgresql.version>42.7.2</postgresql.version>
