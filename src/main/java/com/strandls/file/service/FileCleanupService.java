@@ -12,7 +12,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-	import java.util.Arrays;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -74,12 +74,25 @@ public class FileCleanupService {
 					if (!isNumeric(folder)) {
 						continue;
 					}
+					Path folderPath = Paths.get(BASE_PATH, folder);
+
+					// If entire folder is empty, delete it and continue
+					if (isDirectoryCompletelyEmpty(folderPath)) {
+						try {
+							Files.delete(folderPath);
+							logger.info("Deleted empty folder: " + folderPath);
+						} catch (IOException e) {
+							logger.error("Could not delete folder: " + folderPath + " - " + e.getMessage());
+						}
+						continue;
+					}
+
 					String user = getUserInfo(session, Long.parseLong(folder));
 					if (user == null) {
 						continue;
 					}
 
-					try (Stream<Path> fieldPath = Files.walk(Paths.get(BASE_PATH + File.separatorChar + folder))) {
+					try (Stream<Path> fieldPath = Files.walk(folderPath)) {
 						List<String> files = fieldPath.filter(Files::isRegularFile).filter(f -> {
 							long noOfDays = getDifference(getFileCreationDate(f));
 							return noOfDays >= MAIL_THRESHOLD;
@@ -88,6 +101,7 @@ public class FileCleanupService {
 							long noOfDays = getDifference(getFileCreationDate(f));
 							return String.join(DELIMITER, String.valueOf(noOfDays), tmp.getAbsolutePath());
 						}).collect(Collectors.toList());
+
 						boolean sendMail = files.stream()
 								.anyMatch(f -> Long.parseLong(f.split(DELIMITER)[0]) == MAIL_THRESHOLD);
 
@@ -103,12 +117,13 @@ public class FileCleanupService {
 							model.put(MY_UPLOADS_DELETE_MAIL.TO_DATE.getAction(), getFormattedDate(new Date(), 2));
 							data.put(FIELDS.DATA.getAction(), JsonUtil.unflattenJSON(model));
 
-							Map<String, Object> mailData = new HashMap<String, Object>();
+							Map<String, Object> mailData = new HashMap<>();
 							mailData.put(INFO_FIELDS.TYPE.getAction(), MAIL_TYPE.MY_UPLOADS_DELETE_MAIL.getAction());
 							mailData.put(INFO_FIELDS.RECIPIENTS.getAction(), Arrays.asList(data));
 							producer.produceMail(RabbitMqConnection.EXCHANGE, RabbitMqConnection.ROUTING_KEY, null,
 									JsonUtil.mapToJSON(mailData));
 						}
+
 						files.forEach(file -> {
 							String[] uri = file.split(DELIMITER);
 							Long fileCreatedBefore = Long.parseLong(uri[0]);
@@ -117,19 +132,47 @@ public class FileCleanupService {
 								Path path = Paths.get(filePath);
 								try {
 									Files.delete(path);
+									logger.info("Deleted file: " + path);
 								} catch (IOException ei) {
-									logger.error(ei.getMessage());
+									logger.error("Failed to delete file: " + ei.getMessage());
 								}
 							}
 						});
-					}
 
+						// Now clean only empty subfolders inside the main folder
+						deleteEmptySubdirectories(folderPath);
+					}
 				}
 			}
 		} catch (Exception ex) {
-			logger.error(ex.getMessage());
+			logger.error("Error in runCleanup: " + ex.getMessage());
 		} finally {
 			session.close();
+		}
+	}
+
+	// Check if a directory and all its subdirectories are empty
+	private boolean isDirectoryCompletelyEmpty(Path dir) throws IOException {
+		try (Stream<Path> stream = Files.walk(dir)) {
+			return stream.filter(path -> !path.equals(dir)).noneMatch(Files::exists);
+		}
+	}
+
+	// Only delete subdirectories if they are completely empty
+	private void deleteEmptySubdirectories(Path parent) throws IOException {
+		try (Stream<Path> walk = Files.walk(parent, 1)) {
+			walk.filter(Files::isDirectory).filter(sub -> !sub.equals(parent)) // skip the parent itself
+					.forEach(subdir -> {
+						try (Stream<Path> subContent = Files.walk(subdir)) {
+							boolean isEmpty = subContent.filter(p -> !p.equals(subdir)).noneMatch(Files::exists);
+							if (isEmpty) {
+								Files.delete(subdir);
+								logger.info("Deleted empty subdirectory: " + subdir);
+							}
+						} catch (IOException e) {
+							logger.error("Failed to delete subdirectory: " + subdir + " - " + e.getMessage());
+						}
+					});
 		}
 	}
 
