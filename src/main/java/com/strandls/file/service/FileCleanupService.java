@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
 import com.google.inject.Inject;
 import com.rabbitmq.client.Channel;
 import com.strandls.file.RabbitMqConnection;
-import com.strandls.file.scheduler.QuartzJob;
 import com.strandls.file.util.AppUtil;
 import com.strandls.file.util.PropertyFileUtil;
 import com.strandls.mail_utility.model.EnumModel.FIELDS;
@@ -47,7 +46,7 @@ public class FileCleanupService {
 	@Inject
 	Channel channel;
 
-	private static final Logger logger = LoggerFactory.getLogger(QuartzJob.class);
+	private static final Logger logger = LoggerFactory.getLogger(FileCleanupService.class);
 
 	private static final String DELIMITER = "@@@";
 	private static final String DATE_FORMAT = "dd/MM/yyyy";
