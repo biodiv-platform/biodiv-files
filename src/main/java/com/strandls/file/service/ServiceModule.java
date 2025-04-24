@@ -3,7 +3,7 @@ package com.strandls.file.service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 
-public class ServiceModule extends AbstractModule{
+public class ServiceModule extends AbstractModule {
 
 	@Override
 	protected void configure() {
@@ -11,5 +11,6 @@ public class ServiceModule extends AbstractModule{
 		bind(FileAccessService.class).in(Scopes.SINGLETON);
 		bind(FileUploadService.class).in(Scopes.SINGLETON);
 		bind(FileDownloadService.class).in(Scopes.SINGLETON);
+		bind(FileCleanupService.class).in(Scopes.SINGLETON);
 	}
 }

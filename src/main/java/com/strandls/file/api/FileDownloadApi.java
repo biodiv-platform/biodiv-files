@@ -4,8 +4,8 @@ import com.strandls.authentication_utility.filter.ValidateUser;
 import com.strandls.authentication_utility.util.AuthUtil;
 import com.strandls.file.ApiContants;
 import com.strandls.file.model.FileUploadModel;
-import com.strandls.file.scheduler.QuartzJob;
 import com.strandls.file.service.FileAccessService;
+import com.strandls.file.service.FileCleanupService;
 import com.strandls.file.service.FileDownloadService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -14,8 +14,6 @@ import io.swagger.annotations.ApiResponses;
 import net.minidev.json.JSONArray;
 
 import org.pac4j.core.profile.CommonProfile;
-import org.quartz.JobKey;
-import org.quartz.Scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +43,7 @@ public class FileDownloadApi {
 	private FileAccessService accessService;
 
 	@Inject
-	private Scheduler quartzScheduler;
+	FileCleanupService fileCleanupService;
 
 	@Path("ping")
 	@GET
@@ -69,7 +67,7 @@ public class FileDownloadApi {
 		}
 
 		try {
-			quartzScheduler.triggerJob(new JobKey(QuartzJob.class.getSimpleName()));
+			fileCleanupService.runCleanup();
 			return Response.ok().entity("Cleanup job triggered successfully.").build();
 		} catch (Exception e) {
 			logger.error("Failed to trigger cleanup job: {}", e.getMessage(), e);
