@@ -12,9 +12,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
+	import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -68,88 +67,67 @@ public class FileCleanupService {
 		try {
 			RabbitMQProducer producer = new RabbitMQProducer(channel);
 			try (Stream<Path> stream = Files.list(Paths.get(BASE_PATH)).filter(Files::isDirectory)) {
-				for (Path p : stream.collect(Collectors.toList())) {
+				List<Path> paths = stream.collect(Collectors.toList());
+				String[] userData;
+				for (Path p : paths) {
 					String folder = p.getFileName().toString();
-					if (!isNumeric(folder))
+					if (!isNumeric(folder)) {
 						continue;
-
+					}
 					String user = getUserInfo(session, Long.parseLong(folder));
-					if (user == null)
+					if (user == null) {
 						continue;
+					}
 
-					Path userPath = Paths.get(BASE_PATH, folder);
-					List<String> files = new ArrayList<>();
+					try (Stream<Path> fieldPath = Files.walk(Paths.get(BASE_PATH + File.separatorChar + folder))) {
+						List<String> files = fieldPath.filter(Files::isRegularFile).filter(f -> {
+							long noOfDays = getDifference(getFileCreationDate(f));
+							return noOfDays >= MAIL_THRESHOLD;
+						}).map(f -> {
+							File tmp = f.toFile();
+							long noOfDays = getDifference(getFileCreationDate(f));
+							return String.join(DELIMITER, String.valueOf(noOfDays), tmp.getAbsolutePath());
+						}).collect(Collectors.toList());
+						boolean sendMail = files.stream()
+								.anyMatch(f -> Long.parseLong(f.split(DELIMITER)[0]) == MAIL_THRESHOLD);
 
-					try (Stream<Path> fileStream = Files.walk(userPath)) {
-						fileStream.filter(Files::isRegularFile).forEach(f -> {
-							long age = getDifference(getFileCreationDate(f));
-							if (age >= MAIL_THRESHOLD) {
-								files.add(String.join(DELIMITER, String.valueOf(age), f.toString()));
+						if (sendMail) {
+							userData = user.split(DELIMITER);
+							Map<String, Object> data = new HashMap<>();
+							data.put(FIELDS.TYPE.getAction(), MAIL_TYPE.MY_UPLOADS_DELETE_MAIL.getAction());
+							data.put(FIELDS.TO.getAction(), new String[] { userData[0] });
+							data.put(FIELDS.SUBSCRIPTION.getAction(), Boolean.valueOf(userData[2]));
+							Map<String, Object> model = new HashMap<>();
+							model.put(MY_UPLOADS_DELETE_MAIL.USERNAME.getAction(), userData[1]);
+							model.put(MY_UPLOADS_DELETE_MAIL.FROM_DATE.getAction(), getFormattedDate(new Date(), -18));
+							model.put(MY_UPLOADS_DELETE_MAIL.TO_DATE.getAction(), getFormattedDate(new Date(), 2));
+							data.put(FIELDS.DATA.getAction(), JsonUtil.unflattenJSON(model));
+
+							Map<String, Object> mailData = new HashMap<String, Object>();
+							mailData.put(INFO_FIELDS.TYPE.getAction(), MAIL_TYPE.MY_UPLOADS_DELETE_MAIL.getAction());
+							mailData.put(INFO_FIELDS.RECIPIENTS.getAction(), Arrays.asList(data));
+							producer.produceMail(RabbitMqConnection.EXCHANGE, RabbitMqConnection.ROUTING_KEY, null,
+									JsonUtil.mapToJSON(mailData));
+						}
+						files.forEach(file -> {
+							String[] uri = file.split(DELIMITER);
+							Long fileCreatedBefore = Long.parseLong(uri[0]);
+							String filePath = uri[1];
+							if (fileCreatedBefore >= DELETE_THRESHOLD) {
+								Path path = Paths.get(filePath);
+								try {
+									Files.delete(path);
+								} catch (IOException ei) {
+									logger.error(ei.getMessage());
+								}
 							}
 						});
-					} catch (IOException e) {
-						logger.error("Failed to walk files for user " + folder + ": " + e.getMessage(), e);
-						continue;
 					}
 
-					boolean sendMail = files.stream()
-							.anyMatch(f -> Long.parseLong(f.split(DELIMITER)[0]) == MAIL_THRESHOLD);
-
-					if (sendMail) {
-						String[] userData = user.split(DELIMITER);
-
-						Map<String, Object> data = new HashMap<>();
-						data.put(FIELDS.TYPE.getAction(), MAIL_TYPE.MY_UPLOADS_DELETE_MAIL.getAction());
-						data.put(FIELDS.TO.getAction(), new String[] { userData[0] });
-						data.put(FIELDS.SUBSCRIPTION.getAction(), Boolean.valueOf(userData[2]));
-
-						Map<String, Object> model = new HashMap<>();
-						model.put(MY_UPLOADS_DELETE_MAIL.USERNAME.getAction(), userData[1]);
-						model.put(MY_UPLOADS_DELETE_MAIL.FROM_DATE.getAction(), getFormattedDate(new Date(), -18));
-						model.put(MY_UPLOADS_DELETE_MAIL.TO_DATE.getAction(), getFormattedDate(new Date(), 2));
-						data.put(FIELDS.DATA.getAction(), JsonUtil.unflattenJSON(model));
-
-						Map<String, Object> mailData = new HashMap<>();
-						mailData.put(INFO_FIELDS.TYPE.getAction(), MAIL_TYPE.MY_UPLOADS_DELETE_MAIL.getAction());
-						mailData.put(INFO_FIELDS.RECIPIENTS.getAction(), List.of(data));
-
-						producer.produceMail(RabbitMqConnection.EXCHANGE, RabbitMqConnection.ROUTING_KEY, null,
-								JsonUtil.mapToJSON(mailData));
-					}
-
-					for (String file : files) {
-						String[] parts = file.split(DELIMITER);
-						long age = Long.parseLong(parts[0]);
-						Path filePath = Paths.get(parts[1]);
-
-						if (age >= DELETE_THRESHOLD) {
-							try {
-								Files.delete(filePath);
-							} catch (IOException e) {
-								logger.error("Failed to delete file " + filePath + ": " + e.getMessage(), e);
-							}
-						}
-					}
-
-					// Clean up empty subdirectories
-					try (Stream<Path> dirs = Files.walk(userPath).sorted(Comparator.reverseOrder())
-							.filter(Files::isDirectory)) {
-						for (Path dir : dirs.collect(Collectors.toList())) {
-							try {
-								if (Files.list(dir).findAny().isEmpty()) {
-									Files.delete(dir);
-								}
-							} catch (IOException e) {
-								logger.error("Failed to delete directory " + dir + ": " + e.getMessage(), e);
-							}
-						}
-					} catch (IOException e) {
-						logger.error("Failed to clean directories for user " + folder + ": " + e.getMessage(), e);
-					}
 				}
 			}
 		} catch (Exception ex) {
-			logger.error("Job execution failed: " + ex.getMessage(), ex);
+			logger.error(ex.getMessage());
 		} finally {
 			session.close();
 		}
