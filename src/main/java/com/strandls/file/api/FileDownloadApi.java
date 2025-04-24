@@ -57,6 +57,7 @@ public class FileDownloadApi {
 	@Path("trigger/myUploads/cleanup")
 	@POST
 	@ValidateUser
+	@ApiOperation(value = "URI to trigger myuploads cleanup cron", response = String.class)
 	public Response triggerCleanupJob(@Context HttpServletRequest request) {
 		CommonProfile profile = AuthUtil.getProfileFromRequest(request);
 		JSONArray userRoles = (JSONArray) profile.getAttribute("roles");
