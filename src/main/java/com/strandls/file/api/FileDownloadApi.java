@@ -1,13 +1,21 @@
 package com.strandls.file.api;
 
+import com.strandls.authentication_utility.filter.ValidateUser;
+import com.strandls.authentication_utility.util.AuthUtil;
 import com.strandls.file.ApiContants;
 import com.strandls.file.model.FileUploadModel;
+import com.strandls.file.scheduler.QuartzJob;
 import com.strandls.file.service.FileAccessService;
 import com.strandls.file.service.FileDownloadService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import net.minidev.json.JSONArray;
+
+import org.pac4j.core.profile.CommonProfile;
+import org.quartz.JobKey;
+import org.quartz.Scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +36,7 @@ import java.nio.file.Paths;
 @Path(ApiContants.GET)
 @Api("Download")
 public class FileDownloadApi {
-    
+
 	private static final Logger logger = LoggerFactory.getLogger(FileDownloadApi.class);
 
 	@Inject
@@ -36,11 +44,36 @@ public class FileDownloadApi {
 	@Inject
 	private FileAccessService accessService;
 
+	@Inject
+	private Scheduler quartzScheduler;
+
 	@Path("ping")
 	@GET
 	@ApiOperation(value = "Dummy URI to print FileMetaData model", response = String.class)
 	public Response ping() {
 		return Response.status(Status.OK).entity("pong").build();
+	}
+
+	@POST
+	@ValidateUser
+	@Path("trigger/myUploads/cleanup")
+	public Response triggerCleanupJob(@Context HttpServletRequest request) {
+		CommonProfile profile = AuthUtil.getProfileFromRequest(request);
+		JSONArray userRoles = (JSONArray) profile.getAttribute("roles");
+
+		if (!userRoles.contains("ROLE_ADMIN")) {
+			logger.warn("Non-admin user {} attempted to trigger cleanup job.", profile.getId());
+			return Response.status(Response.Status.FORBIDDEN).entity("You do not have permission to trigger this job.")
+					.build();
+		}
+
+		try {
+			quartzScheduler.triggerJob(new JobKey(QuartzJob.class.getSimpleName()));
+			return Response.ok().entity("Cleanup job triggered successfully.").build();
+		} catch (Exception e) {
+			logger.error("Failed to trigger cleanup job: {}", e.getMessage(), e);
+			return Response.serverError().entity("Failed to trigger cleanup job: " + e.getMessage()).build();
+		}
 	}
 
 	@Path("model")
@@ -75,7 +108,7 @@ public class FileDownloadApi {
 		return fileDownloadService.getImage(request, directory, fileName, width, height, userRequestedFormat, fit,
 				preserveFormat);
 	}
-	
+
 	@Path("crop/plantnet/{directory:.+}/{fileName}")
 	@GET
 	@Consumes(MediaType.TEXT_PLAIN)
@@ -127,8 +160,8 @@ public class FileDownloadApi {
 	@Path("raw/{directory:.+}/{fileName}")
 	@GET
 	@ApiOperation(value = "Get the raw resource", response = StreamingOutput.class)
-	public Response getRawResource(@PathParam("directory") String directory, @PathParam("fileName") String fileName) throws UnsupportedEncodingException
-			 {
+	public Response getRawResource(@PathParam("directory") String directory, @PathParam("fileName") String fileName)
+			throws UnsupportedEncodingException {
 		fileName = URLDecoder.decode(fileName, StandardCharsets.UTF_8.name());
 		if (directory.contains("..") || fileName.contains("..")) {
 			return Response.status(Status.NOT_ACCEPTABLE).build();
@@ -174,7 +207,7 @@ public class FileDownloadApi {
 					new LinkOption[] { LinkOption.NOFOLLOW_LINKS }))
 				return accessService.genericFileDownload(path + File.separator + fileName);
 		} catch (IOException e) {
-			 logger.error(e.getMessage());
+			logger.error(e.getMessage());
 			return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
 
 		}
