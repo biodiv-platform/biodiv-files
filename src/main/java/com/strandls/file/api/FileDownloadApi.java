@@ -54,9 +54,9 @@ public class FileDownloadApi {
 		return Response.status(Status.OK).entity("pong").build();
 	}
 
+	@Path("trigger/myUploads/cleanup")
 	@POST
 	@ValidateUser
-	@Path("trigger/myUploads/cleanup")
 	public Response triggerCleanupJob(@Context HttpServletRequest request) {
 		CommonProfile profile = AuthUtil.getProfileFromRequest(request);
 		JSONArray userRoles = (JSONArray) profile.getAttribute("roles");
