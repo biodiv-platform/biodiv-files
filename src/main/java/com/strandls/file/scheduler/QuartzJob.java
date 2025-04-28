@@ -81,12 +81,7 @@ public class QuartzJob implements Job {
 
 					// If entire folder is empty, delete it and continue
 					if (isDirectoryCompletelyEmpty(folderPath)) {
-						try {
-							Files.delete(folderPath);
-							logger.info("Deleted empty folder: " + folderPath);
-						} catch (IOException e) {
-							logger.error("Could not delete folder: " + folderPath + " - " + e.getMessage());
-						}
+						deleteFolderIfEmpty(folderPath);
 						continue;
 					}
 
@@ -133,9 +128,9 @@ public class QuartzJob implements Job {
 								Path path = Paths.get(filePath);
 								try {
 									Files.delete(path);
-									logger.info("Deleted file: " + path);
+									logger.info("Deleted file: {}", path);
 								} catch (IOException ei) {
-									logger.error("Failed to delete file: " + ei.getMessage());
+									logger.error("Failed to delete file: {}", ei.getMessage(), ei);
 								}
 							}
 						});
@@ -156,6 +151,15 @@ public class QuartzJob implements Job {
 		}
 	}
 
+	private void deleteFolderIfEmpty(Path folderPath) {
+		try {
+			Files.delete(folderPath);
+			logger.info("Deleted empty folder: {}", folderPath);
+		} catch (IOException e) {
+			logger.error("Failed to delete empty folder {} - {}", folderPath, e.getMessage(), e);
+		}
+	}
+
 	private void deleteEmptySubdirectories(Path parent) throws IOException {
 		try (Stream<Path> walk = Files.walk(parent, 1)) {
 			walk.filter(Files::isDirectory).filter(sub -> !sub.equals(parent)) // skip the parent itself
@@ -164,10 +168,10 @@ public class QuartzJob implements Job {
 							boolean isEmpty = subContent.filter(p -> !p.equals(subdir)).noneMatch(Files::exists);
 							if (isEmpty) {
 								Files.delete(subdir);
-								logger.info("Deleted empty subdirectory: " + subdir);
+								logger.info("Deleted empty subdirectory: {}", subdir);
 							}
 						} catch (IOException e) {
-							logger.error("Failed to delete subdirectory: " + subdir + " - " + e.getMessage());
+							logger.error("Failed to delete subdirectory: {} - {}", subdir, e.getMessage(), e);
 						}
 					});
 		}
