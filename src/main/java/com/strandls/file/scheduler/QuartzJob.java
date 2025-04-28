@@ -77,12 +77,25 @@ public class QuartzJob implements Job {
 					if (!isNumeric(folder)) {
 						continue;
 					}
+					Path folderPath = Paths.get(BASE_PATH, folder);
+
+					// If entire folder is empty, delete it and continue
+					if (isDirectoryCompletelyEmpty(folderPath)) {
+						try {
+							Files.delete(folderPath);
+							logger.info("Deleted empty folder: " + folderPath);
+						} catch (IOException e) {
+							logger.error("Could not delete folder: " + folderPath + " - " + e.getMessage());
+						}
+						continue;
+					}
+
 					String user = getUserInfo(session, Long.parseLong(folder));
 					if (user == null) {
 						continue;
 					}
 
-					try (Stream<Path> fieldPath = Files.walk(Paths.get(BASE_PATH + File.separatorChar + folder))) {
+					try (Stream<Path> fieldPath = Files.walk(folderPath)) {
 						List<String> files = fieldPath.filter(Files::isRegularFile).filter(f -> {
 							long noOfDays = getDifference(getFileCreationDate(f));
 							return noOfDays >= MAIL_THRESHOLD;
@@ -106,7 +119,7 @@ public class QuartzJob implements Job {
 							model.put(MY_UPLOADS_DELETE_MAIL.TO_DATE.getAction(), getFormattedDate(new Date(), 2));
 							data.put(FIELDS.DATA.getAction(), JsonUtil.unflattenJSON(model));
 
-							Map<String, Object> mailData = new HashMap<String, Object>();
+							Map<String, Object> mailData = new HashMap<>();
 							mailData.put(INFO_FIELDS.TYPE.getAction(), MAIL_TYPE.MY_UPLOADS_DELETE_MAIL.getAction());
 							mailData.put(INFO_FIELDS.RECIPIENTS.getAction(), Arrays.asList(data));
 							producer.produceMail(RabbitMqConnection.EXCHANGE, RabbitMqConnection.ROUTING_KEY, null,
@@ -120,19 +133,43 @@ public class QuartzJob implements Job {
 								Path path = Paths.get(filePath);
 								try {
 									Files.delete(path);
+									logger.info("Deleted file: " + path);
 								} catch (IOException ei) {
-									logger.error(ei.getMessage());
+									logger.error("Failed to delete file: " + ei.getMessage());
 								}
 							}
 						});
+						deleteEmptySubdirectories(folderPath);
 					}
-
 				}
 			}
 		} catch (Exception ex) {
 			logger.error(ex.getMessage());
 		} finally {
 			session.close();
+		}
+	}
+
+	private boolean isDirectoryCompletelyEmpty(Path dir) throws IOException {
+		try (Stream<Path> stream = Files.walk(dir)) {
+			return stream.filter(path -> !path.equals(dir)).noneMatch(Files::exists);
+		}
+	}
+
+	private void deleteEmptySubdirectories(Path parent) throws IOException {
+		try (Stream<Path> walk = Files.walk(parent, 1)) {
+			walk.filter(Files::isDirectory).filter(sub -> !sub.equals(parent)) // skip the parent itself
+					.forEach(subdir -> {
+						try (Stream<Path> subContent = Files.walk(subdir)) {
+							boolean isEmpty = subContent.filter(p -> !p.equals(subdir)).noneMatch(Files::exists);
+							if (isEmpty) {
+								Files.delete(subdir);
+								logger.info("Deleted empty subdirectory: " + subdir);
+							}
+						} catch (IOException e) {
+							logger.error("Failed to delete subdirectory: " + subdir + " - " + e.getMessage());
+						}
+					});
 		}
 	}
 
