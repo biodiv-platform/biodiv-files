@@ -11,7 +11,7 @@
 
 	<properties>
 		<!-- Code -->
-		<org.pac4j.version>3.7.0</org.pac4j.version>
+		<org.pac4j.version>4.5.5</org.pac4j.version>
 		<jax-rs-pac4j.version>2.3.0</jax-rs-pac4j.version>
 
 
