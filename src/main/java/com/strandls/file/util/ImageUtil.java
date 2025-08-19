@@ -2,7 +2,7 @@ package com.strandls.file.util;
 
 import java.io.File;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 public class ImageUtil {
 	public static void toWEBP(HttpServletRequest req, File src, File dest) throws Exception {

@@ -15,8 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import javax.servlet.ServletContextEvent;
-
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
@@ -38,9 +36,11 @@ import com.strandls.file.scheduler.QuartzJobFactory;
 import com.strandls.file.scheduler.QuartzScheduler;
 import com.strandls.file.service.ServiceModule;
 
+import jakarta.servlet.ServletContextEvent;
+
 public class FileServeletContextListener extends GuiceServletContextListener {
 
-private static final Logger logger = LoggerFactory.getLogger(FileServeletContextListener.class);
+	private static final Logger logger = LoggerFactory.getLogger(FileServeletContextListener.class);
 	private Scheduler scheduler;
 
 	@Override
@@ -57,14 +57,14 @@ private static final Logger logger = LoggerFactory.getLogger(FileServeletContext
 						configuration.addAnnotatedClass(cls);
 					}
 				} catch (ClassNotFoundException | IOException | URISyntaxException e) {
-				 logger.error(e.getMessage());
+					logger.error(e.getMessage());
 				}
 
 				configuration = configuration.configure();
 				SessionFactory sessionFactory = configuration.buildSessionFactory();
 
 				Map<String, String> props = new HashMap<String, String>();
-				props.put("javax.ws.rs.Application", ApplicationConfig.class.getName());
+				props.put("jakarta.ws.rs.Application", ApplicationConfig.class.getName());
 				props.put("jersey.config.server.provider.packages", "com");
 				props.put("jersey.config.server.wadl.disableWadl", "true");
 
@@ -95,7 +95,6 @@ private static final Logger logger = LoggerFactory.getLogger(FileServeletContext
 		}
 
 		return injector;
-
 	}
 
 	protected List<Class<?>> getEntityClassesFromPackage(String packageName)
@@ -108,7 +107,7 @@ private static final Logger logger = LoggerFactory.getLogger(FileServeletContext
 			Annotation[] annotations = cls.getAnnotations();
 
 			for (Annotation annotation : annotations) {
-				if (annotation instanceof javax.persistence.Entity) {
+				if (annotation instanceof jakarta.persistence.Entity) {
 					classes.add(cls);
 				}
 			}
@@ -139,7 +138,6 @@ private static final Logger logger = LoggerFactory.getLogger(FileServeletContext
 			});
 		}
 		return names;
-
 	}
 
 	@Override

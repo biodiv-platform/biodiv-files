@@ -17,5 +17,4 @@ public class QuartzScheduler {
 				.build();
 		schedule.scheduleJob(jobDetail, jobTrigger);
 	}
-
 }

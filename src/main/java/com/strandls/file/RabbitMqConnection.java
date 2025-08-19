@@ -1,6 +1,4 @@
-/**
- * 
- */
+/** */
 package com.strandls.file;
 
 import java.io.IOException;
@@ -14,7 +12,6 @@ import com.strandls.file.util.PropertyFileUtil;
 
 /**
  * @author Abhishek Rudra
- *
  */
 public class RabbitMqConnection {
 

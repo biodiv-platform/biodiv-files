@@ -1,26 +1,13 @@
 package com.strandls.file;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.annotation.Annotation;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
-import java.util.stream.Stream;
-
-import javax.ws.rs.core.Application;
 
 import org.glassfish.hk2.api.ServiceLocator;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.spi.Container;
 import org.glassfish.jersey.server.spi.ContainerLifecycleListener;
 import org.glassfish.jersey.servlet.ServletContainer;
@@ -30,54 +17,67 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.inject.Injector;
-import com.strandls.authentication_utility.filter.InterceptorModule;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiModel;
-import io.swagger.jaxrs.config.BeanConfig;
+import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
+import io.swagger.v3.oas.integration.GenericOpenApiContextBuilder;
+import io.swagger.v3.oas.integration.SwaggerConfiguration;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.servers.Server;
+import jakarta.ws.rs.core.Application;
 
 public class ApplicationConfig extends Application {
 
-	/**
-	 * 
-	 */
-
 	private static final Logger logger = LoggerFactory.getLogger(ApplicationConfig.class);
 
+	private final SwaggerConfiguration swaggerConfiguration;
+
 	public ApplicationConfig() {
-		try {
-			InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("config.properties");
+		Properties properties = new Properties();
 
-			Properties properties = new Properties();
-			try {
+		try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("config.properties")) {
+			if (in == null) {
+				logger.error("config.properties not found in classpath");
+			} else {
 				properties.load(in);
-			} catch (IOException e) {
-				logger.error(e.getMessage());
 			}
+		} catch (IOException e) {
+			logger.error("Error loading config.properties", e);
+		}
 
-			BeanConfig beanConfig = new BeanConfig();
-			beanConfig.setVersion(properties.getProperty("version"));
-			beanConfig.setTitle(properties.getProperty("title"));
-			beanConfig.setSchemes(properties.getProperty("schemes").split(","));
-			beanConfig.setHost(properties.getProperty("host"));
-			beanConfig.setBasePath(properties.getProperty("basePath"));
-			beanConfig.setResourcePackage(properties.getProperty("resourcePackage"));
-			beanConfig.setPrettyPrint(new Boolean(properties.getProperty("prettyPrint")));
-			beanConfig.setScan(new Boolean(properties.getProperty("scan")));
+		// Setup OpenAPI Info from properties
+		Info info = new Info().title(properties.getProperty("title")).version(properties.getProperty("version"));
 
-			in.close();
+		// Setup server URL from host + basePath + schemes
+		String host = properties.getProperty("host");
+		String basePath = properties.getProperty("basePath");
+		String[] schemes = properties.getProperty("schemes").split(",");
+		// Just pick the first scheme (usually http or https)
+		String scheme = schemes.length > 0 ? schemes[0] : "http";
 
+		String serverUrl = scheme + "://" + host + basePath;
+
+		Server server = new Server().url(serverUrl);
+
+		Set<String> resourcePackages = Set.of(properties.getProperty("resourcePackage"));
+
+		swaggerConfiguration = new SwaggerConfiguration().openAPI(new OpenAPI().info(info).servers(List.of(server)))
+				.resourcePackages(resourcePackages)
+				.prettyPrint(Boolean.parseBoolean(properties.getProperty("prettyPrint", "true")))
+				.prettyPrint(Boolean.parseBoolean(properties.getProperty("scan", "true")));
+
+		try {
+			new GenericOpenApiContextBuilder().openApiConfiguration(swaggerConfiguration).buildContext(true);
 		} catch (Exception e) {
-			logger.error(e.getMessage());
+			logger.error("Failed to initialize OpenAPI context", e);
 		}
 	}
 
 	@Override
 	public Set<Object> getSingletons() {
+		Set<Object> singletons = new HashSet<>();
 
-		Set<Object> singletons = new HashSet<Object>();
 		singletons.add(new ContainerLifecycleListener() {
-
 			@Override
 			public void onStartup(Container container) {
 				ServletContainer servletContainer = (ServletContainer) container;
@@ -92,79 +92,22 @@ public class ApplicationConfig extends Application {
 
 			@Override
 			public void onShutdown(Container container) {
-				// TODO Auto-generated method stub
-
 			}
 
 			@Override
 			public void onReload(Container container) {
-				// TODO Auto-generated method stub
-
 			}
 		});
-		singletons.add(new InterceptorModule());
 
 		return singletons;
 	}
 
 	@Override
 	public Set<Class<?>> getClasses() {
-		Set<Class<?>> resource = new HashSet<Class<?>>();
+		Set<Class<?>> resources = new HashSet<>();
+		// Add OpenAPI resource that exposes the /openapi endpoint
+		resources.add(OpenApiResource.class);
 
-		try {
-			List<Class<?>> swaggerClass = getSwaggerAnnotationClassesFromPackage("com");
-			resource.addAll(swaggerClass);
-		} catch (ClassNotFoundException | URISyntaxException | IOException e) {
-		}
-
-		resource.add(io.swagger.jaxrs.listing.SwaggerSerializers.class);
-		resource.add(io.swagger.jaxrs.listing.ApiListingResource.class);
-
-		resource.add(MultiPartFeature.class);
-
-		return resource;
-	}
-
-	protected List<Class<?>> getSwaggerAnnotationClassesFromPackage(String packageName)
-			throws URISyntaxException, IOException, ClassNotFoundException {
-
-		List<String> classNames = getClassNamesFromPackage(packageName);
-		List<Class<?>> classes = new ArrayList<Class<?>>();
-		for (String className : classNames) {
-			Class<?> cls = Class.forName(className);
-			Annotation[] annotations = cls.getAnnotations();
-
-			for (Annotation annotation : annotations) {
-				if (annotation instanceof Api || annotation instanceof ApiModel) {
-					classes.add(cls);
-				}
-			}
-		}
-
-		return classes;
-	}
-
-	private static ArrayList<String> getClassNamesFromPackage(final String packageName)
-			throws URISyntaxException, IOException {
-
-		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-		ArrayList<String> names = new ArrayList<String>();
-		URL packageURL = classLoader.getResource(packageName);
-
-		URI uri = new URI(packageURL.toString());
-		File folder = new File(uri.getPath());
-
-		try (Stream<Path> files = Files.find(Paths.get(folder.getAbsolutePath()), 999,
-				(p, bfa) -> bfa.isRegularFile())) {
-			files.forEach(file -> {
-				String name = file.toFile().getAbsolutePath()
-						.replaceAll(folder.getAbsolutePath() + File.separatorChar, "").replace(File.separatorChar, '.');
-				if (name.indexOf('.') != -1) {
-					name = packageName + '.' + name.substring(0, name.lastIndexOf('.'));
-					names.add(name);
-				}
-			});
-		}
-		return names;
+		return resources;
 	}
 }

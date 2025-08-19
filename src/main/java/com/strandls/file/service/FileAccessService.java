@@ -16,24 +16,22 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Stream;
 
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
-
 import org.apache.tika.io.FilenameUtils;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;
-
-import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.strandls.file.dao.FileAccessDao;
 import com.strandls.file.model.FileDownloadCredentials;
 import com.strandls.file.model.FileDownloads;
 import com.strandls.file.util.AppUtil;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.StreamingOutput;
 
 public class FileAccessService {
 

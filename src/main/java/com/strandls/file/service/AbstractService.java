@@ -5,12 +5,11 @@ import java.util.List;
 
 import com.strandls.file.dao.AbstractDao;
 
-
-public abstract class  AbstractService<T> {
+public abstract class AbstractService<T> {
 
 	public Class<T> entityClass;
-	private  AbstractDao<T, Long> dao;
-	
+	private AbstractDao<T, Long> dao;
+
 	public AbstractService(AbstractDao<T, Long> dao) {
 		this.dao = dao;
 		entityClass = ((Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0]);
@@ -25,14 +24,13 @@ public abstract class  AbstractService<T> {
 		}
 	}
 
-	public T update(T entity)  {
+	public T update(T entity) {
 		try {
 			this.dao.update(entity);
 			return entity;
 		} catch (RuntimeException re) {
 			throw re;
 		}
-
 	}
 
 	public T delete(Long id) {
@@ -53,9 +51,9 @@ public abstract class  AbstractService<T> {
 			throw re;
 		}
 	}
-	
+
 	public List<T> findAll() {
-		
+
 		try {
 			List<T> entities = this.dao.findAll();
 			return entities;

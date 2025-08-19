@@ -95,11 +95,10 @@ public class SheetUtil {
 
 	/**
 	 * extract data from single cell
-	 * 
+	 *
 	 * @param cell
 	 * @return
 	 */
-
 	private Object cellToObject(Cell cell) {
 		CellType type = cell.getCellType();
 		switch (type) {
@@ -118,7 +117,7 @@ public class SheetUtil {
 
 	/**
 	 * Removes whitespace from the given string
-	 * 
+	 *
 	 * @param string
 	 * @return
 	 */
@@ -128,7 +127,7 @@ public class SheetUtil {
 
 	/**
 	 * Convert Java Objects to JSON String
-	 * 
+	 *
 	 * @param customers
 	 * @param fileName
 	 */
@@ -146,9 +145,7 @@ public class SheetUtil {
 
 		} catch (Exception e) {
 			logger.error(e.getMessage());
-
 		}
 		return Collections.emptyList();
 	}
-
 }

@@ -5,14 +5,15 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+
+import javax.imageio.ImageIO;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import javax.imageio.ImageIO;
 
 public class ThumbnailUtil implements Runnable {
 
 	private static final Logger logger = LoggerFactory.getLogger(ThumbnailUtil.class);
-
 
 	private static final int GALLERY_WIDTH = 500;
 	private static final int GALLERY_HEIGHT = 300;
@@ -23,19 +24,19 @@ public class ThumbnailUtil implements Runnable {
 	private static final int TH1_HEIGHT = 200;
 	private static final int TH2_WIDTH = 320;
 	private static final int TH2_HEIGHT = 320;
-	
+
 	private final String filePath;
 	private final String dirPath;
 	private final String filename;
 	private final String extension;
-	
+
 	public ThumbnailUtil(String filePath, String dirPath, String filename, String extension) {
 		this.filePath = filePath;
 		this.dirPath = dirPath;
 		this.filename = filename;
 		this.extension = extension;
 	}
-	
+
 	@Override
 	public void run() {
 		try {
@@ -99,22 +100,22 @@ public class ThumbnailUtil implements Runnable {
 		ImageIO.write(galleryImage, extension, output);
 	}
 
-	private static void generateGalleryThumbnailImage(BufferedImage cropedImage, String dirPath, String filename, String extension)
-			throws IOException {
+	private static void generateGalleryThumbnailImage(BufferedImage cropedImage, String dirPath, String filename,
+			String extension) throws IOException {
 		BufferedImage image = getScaledImage(cropedImage, GALLERY_TH_WIDTH, GALLERY_TH_HEIGHT);
 		File output = new File(dirPath + File.separatorChar + filename + "_gall_th." + extension);
 		ImageIO.write(image, extension, output);
 	}
 
-	private static void generateThumbnail1Image(BufferedImage cropedImage, String dirPath, String filename, String extension)
-			throws IOException {
+	private static void generateThumbnail1Image(BufferedImage cropedImage, String dirPath, String filename,
+			String extension) throws IOException {
 		BufferedImage image = getScaledImage(cropedImage, TH1_WIDTH, TH1_HEIGHT);
 		File output = new File(dirPath + File.separatorChar + filename + "_th1." + extension);
 		ImageIO.write(image, extension, output);
 	}
 
-	private static void generateThumbnail2Image(BufferedImage cropedImage, String dirPath, String filename, String extension)
-			throws IOException {
+	private static void generateThumbnail2Image(BufferedImage cropedImage, String dirPath, String filename,
+			String extension) throws IOException {
 		BufferedImage image = getScaledImage(cropedImage, TH2_WIDTH, TH2_HEIGHT);
 		File output = new File(dirPath + File.separatorChar + filename + "_th2." + extension);
 		ImageIO.write(image, extension, output);
@@ -137,5 +138,4 @@ public class ThumbnailUtil implements Runnable {
 		g2.dispose();
 		return resizedImage;
 	}
-
 }

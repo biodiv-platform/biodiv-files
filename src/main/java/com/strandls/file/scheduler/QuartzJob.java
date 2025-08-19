@@ -22,7 +22,6 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.strandls.file.util.AppUtil;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.quartz.Job;
@@ -33,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import com.google.inject.Inject;
 import com.rabbitmq.client.Channel;
 import com.strandls.file.RabbitMqConnection;
+import com.strandls.file.util.AppUtil;
 import com.strandls.file.util.PropertyFileUtil;
 import com.strandls.mail_utility.model.EnumModel.FIELDS;
 import com.strandls.mail_utility.model.EnumModel.INFO_FIELDS;
@@ -198,7 +198,6 @@ public class QuartzJob implements Job {
 			logger.error(e.getMessage());
 		}
 		return creation;
-
 	}
 
 	public static LocalDateTime getFileCreationDateTime(Path f) {
@@ -243,5 +242,4 @@ public class QuartzJob implements Job {
 		}
 		return true;
 	}
-
 }

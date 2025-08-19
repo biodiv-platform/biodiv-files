@@ -22,10 +22,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.xml.bind.DatatypeConverter;
-
 import org.apache.tika.Tika;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -45,6 +41,10 @@ import com.strandls.file.util.AppUtil.MODULE;
 import com.strandls.file.util.CompressedFileUploaderThread;
 import com.strandls.file.util.SheetUtil;
 import com.strandls.file.util.ThumbnailUtil;
+
+import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.xml.bind.DatatypeConverter;
 
 public class FileUploadService {
 	private static final Logger logger = LoggerFactory.getLogger(FileUploadService.class);
@@ -70,9 +70,7 @@ public class FileUploadService {
 		storageBasePath = properties.getProperty("storage_dir", "/home/apps/biodiv-image");
 	}
 
-	/**
-	 * Resource Upload
-	 */
+	/** Resource Upload */
 	public FileUploadModel uploadFile(BASE_FOLDERS directory, InputStream inputStream,
 			FormDataContentDisposition fileDetails, HttpServletRequest request, String nestedFolder, String hashKey,
 			boolean resourceFolder) throws IOException {
@@ -189,7 +187,6 @@ public class FileUploadService {
 			fileUploadModel.setError("Unable to upload image");
 			return fileUploadModel;
 		}
-
 	}
 
 	public MyUpload saveFileEncoded(MobileFileUpload fileUplaod, Long userId) {
@@ -208,9 +205,7 @@ public class FileUploadService {
 		return null;
 	}
 
-	/**
-	 * Upload File to My-Uploads
-	 */
+	/** Upload File to My-Uploads */
 	public MyUpload saveFile(InputStream is, MODULE module, String contentFileName, String hash, Long userId)
 			throws Exception {
 		String dir = storageBasePath + File.separatorChar + BASE_FOLDERS.myUploads.getFolder() + File.separatorChar
@@ -298,9 +293,7 @@ public class FileUploadService {
 		return uploadModel;
 	}
 
-	/**
-	 * List Files in My-Uploads
-	 */
+	/** List Files in My-Uploads */
 	public List<MyUpload> getFilesFromUploads(Long userId, MODULE module) throws Exception {
 		List<MyUpload> files = new ArrayList<>();
 		String userDir = BASE_FOLDERS.myUploads.getFolder() + File.separatorChar + userId;
@@ -438,9 +431,7 @@ public class FileUploadService {
 		return uploadModel;
 	}
 
-	/**
-	 * Delete Files from My-Uploads
-	 */
+	/** Delete Files from My-Uploads */
 	public boolean deleteFilesFromMyUploads(Long userId, String fileName) throws IOException {
 		boolean isDeleted = false;
 		String basePath = storageBasePath + File.separatorChar + BASE_FOLDERS.myUploads.getFolder() + File.separatorChar
@@ -453,9 +444,7 @@ public class FileUploadService {
 		return isDeleted;
 	}
 
-	/**
-	 * Move Files from My-Uploads
-	 */
+	/** Move Files from My-Uploads */
 	public Map<String, Object> moveFilesFromUploads(Long userId, List<String> fileList, String folderStr, MODULE module)
 			throws Exception {
 
@@ -508,7 +497,6 @@ public class FileUploadService {
 					fileAttributes.put("size", folderFileSize);
 					finalPaths.put(file, fileAttributes);
 				}
-
 			}
 		} catch (Exception ex) {
 			logger.error(ex.getMessage());
@@ -551,7 +539,6 @@ public class FileUploadService {
 		}
 
 		return false;
-
 	}
 
 	@SuppressWarnings("unused")
@@ -617,7 +604,6 @@ public class FileUploadService {
 			});
 		}
 		return filesMap;
-
 	}
 
 	public Map<String, Object> moveFilesFromUploads(Long userId, List<String> fileList, BASE_FOLDERS folder,

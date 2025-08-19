@@ -12,13 +12,12 @@ import org.slf4j.LoggerFactory;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 
-
 public class QuartzJobFactory implements JobFactory {
-	
+
 	private static final Logger logger = LoggerFactory.getLogger(QuartzJobFactory.class);
 
 	private final Injector inject;
-	
+
 	@Inject
 	public QuartzJobFactory(Injector inject) {
 		this.inject = inject;
@@ -35,6 +34,5 @@ public class QuartzJobFactory implements JobFactory {
 			logger.error(ex.getMessage());
 			throw new UnsupportedOperationException(ex);
 		}
-	}	
-	
+	}
 }

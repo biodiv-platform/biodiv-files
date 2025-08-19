@@ -2,13 +2,12 @@ package com.strandls.file.dao;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-
-import javax.inject.Inject;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.strandls.file.model.FileDownloads;
+
+import jakarta.inject.Inject;
 
 public class FileAccessDao extends AbstractDao<FileDownloads, Long> {
 
@@ -27,12 +26,11 @@ public class FileAccessDao extends AbstractDao<FileDownloads, Long> {
 		try {
 			entity = session.get(FileDownloads.class, id);
 		} catch (Exception e) {
-			 logger.error(e.getMessage());
+			logger.error(e.getMessage());
 		} finally {
 			session.close();
 		}
 
 		return entity;
 	}
-
 }

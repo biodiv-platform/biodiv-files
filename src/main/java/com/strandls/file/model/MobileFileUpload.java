@@ -1,12 +1,8 @@
-/**
- * 
- */
+/** */
 package com.strandls.file.model;
 
 /**
  * @author Abhishek Rudra
- *
- * 
  */
 public class MobileFileUpload {
 
@@ -15,9 +11,7 @@ public class MobileFileUpload {
 	private String filename;
 	private String hash;
 
-	/**
-	 * 
-	 */
+	/** */
 	public MobileFileUpload() {
 		super();
 	}
@@ -67,5 +61,4 @@ public class MobileFileUpload {
 	public void setHash(String hash) {
 		this.hash = hash;
 	}
-
 }

@@ -17,14 +17,13 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import javax.ws.rs.core.CacheControl;
-
 import org.apache.tika.Tika;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.strandls.file.model.MyUpload;
 
+import jakarta.ws.rs.core.CacheControl;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.model.FileHeader;
 
@@ -400,5 +399,4 @@ public class AppUtil {
 				+ "'";
 		return executeCommand(command);
 	}
-
 }

@@ -3,19 +3,17 @@ package com.strandls.file.model;
 import java.io.Serializable;
 import java.util.Date;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "uploaded_file_metadata")
 public class UploadedFileMetadata implements Serializable {
 
-	/**
-	 * 
-	 */
+	/** */
 	private static final long serialVersionUID = -4561731591816339242L;
 
 	public UploadedFileMetadata(Long userId, String uploadedFileOriginalName, String uploadedFileRenamed, String type,
@@ -46,5 +44,4 @@ public class UploadedFileMetadata implements Serializable {
 
 	@Column(name = "movement_date", nullable = false)
 	private Date movementDate;
-
 }

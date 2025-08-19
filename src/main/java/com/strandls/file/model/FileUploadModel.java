@@ -67,5 +67,4 @@ public class FileUploadModel {
 	public void setO(Map<String, Object> o) {
 		this.o = o;
 	}
-
 }

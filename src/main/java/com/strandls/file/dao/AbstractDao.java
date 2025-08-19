@@ -4,10 +4,13 @@ import java.io.Serializable;
 import java.lang.reflect.ParameterizedType;
 import java.util.List;
 
-import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
+
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 
 public abstract class AbstractDao<T, K extends Serializable> {
 
@@ -74,18 +77,19 @@ public abstract class AbstractDao<T, K extends Serializable> {
 
 	public abstract T findById(K id);
 
-	@SuppressWarnings({ "unchecked", "deprecation" })
+	@SuppressWarnings({ "unchecked" })
 	public List<T> findAll() {
 		List<T> entities = null;
 		try (Session session = sessionFactory.openSession()) {
-			Criteria criteria = session.createCriteria(daoType);
-			entities = criteria.setResultTransformer(Criteria.DISTINCT_ROOT_ENTITY).list();
+			CriteriaBuilder cb = session.getCriteriaBuilder();
+			CriteriaQuery<T> cq = cb.createQuery((Class<T>) daoType); // <-- Cast here
+			Root<T> root = cq.from((Class<T>) daoType); // <-- Cast here too
+			cq.select(root).distinct(true);
+			entities = session.createQuery(cq).getResultList();
 			return entities;
 		} catch (Exception e) {
-
+			e.printStackTrace();
 		}
 		return entities;
-
 	}
-
 }

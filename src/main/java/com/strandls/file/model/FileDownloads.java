@@ -8,22 +8,21 @@ package com.strandls.file.model;
 import java.io.Serializable;
 import java.util.Date;
 
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-import javax.validation.constraints.NotNull;
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.persistence.Basic;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
+import jakarta.validation.constraints.NotNull;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 /**
- *
  * @author sethuraman
  */
 @Entity
@@ -31,63 +30,67 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class FileDownloads implements Serializable {
 
-    private static final long serialVersionUID = 1L;
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Basic(optional = false)
-    @Column(name = "id")
-    private Integer id;
-    @Basic(optional = false)
-    @NotNull
-    @Column(name = "date")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date date;
-    @Basic(optional = false)
-    @NotNull
-    @Column(name = "file_name")
-    private String fileName;
-    @JoinColumn(name = "user_id", referencedColumnName = "id")
-    @ManyToOne(optional = false)
-    private FileDownloadCredentials userId;    
+	private static final long serialVersionUID = 1L;
 
-    public FileDownloads() {
-    }
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Basic(optional = false)
+	@Column(name = "id")
+	private Integer id;
 
-    public FileDownloads(Integer id) {
-        this.id = id;
-    }
+	@Basic(optional = false)
+	@NotNull
+	@Column(name = "date")
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date date;
 
-    public FileDownloads(Integer id, Date date, String fileName) {
-        this.id = id;
-        this.date = date;
-        this.fileName = fileName;
-    }
+	@Basic(optional = false)
+	@NotNull
+	@Column(name = "file_name")
+	private String fileName;
 
-    public Integer getId() {
-        return id;
-    }
+	@JoinColumn(name = "user_id", referencedColumnName = "id")
+	@ManyToOne(optional = false)
+	private FileDownloadCredentials userId;
 
-    public void setId(Integer id) {
-        this.id = id;
-    }
+	public FileDownloads() {
+	}
 
-    public Date getDate() {
-        return date;
-    }
+	public FileDownloads(Integer id) {
+		this.id = id;
+	}
 
-    public void setDate(Date date) {
-        this.date = date;
-    }
+	public FileDownloads(Integer id, Date date, String fileName) {
+		this.id = id;
+		this.date = date;
+		this.fileName = fileName;
+	}
 
-    public FileDownloadCredentials getUserId() {
-        return userId;
-    }
+	public Integer getId() {
+		return id;
+	}
 
-    public void setUserId(FileDownloadCredentials userId) {
-        this.userId = userId;
-    }
+	public void setId(Integer id) {
+		this.id = id;
+	}
 
-    public String getFileName() {
+	public Date getDate() {
+		return date;
+	}
+
+	public void setDate(Date date) {
+		this.date = date;
+	}
+
+	public FileDownloadCredentials getUserId() {
+		return userId;
+	}
+
+	public void setUserId(FileDownloadCredentials userId) {
+		this.userId = userId;
+	}
+
+	public String getFileName() {
 		return fileName;
 	}
 
@@ -96,28 +99,27 @@ public class FileDownloads implements Serializable {
 	}
 
 	@Override
-    public int hashCode() {
-        int hash = 0;
-        hash += (id != null ? id.hashCode() : 0);
-        return hash;
-    }
+	public int hashCode() {
+		int hash = 0;
+		hash += (id != null ? id.hashCode() : 0);
+		return hash;
+	}
 
-    @Override
-    public boolean equals(Object object) {
-        // TODO: Warning - this method won't work in the case the id fields are not set
-        if (!(object instanceof FileDownloads)) {
-            return false;
-        }
-        FileDownloads other = (FileDownloads) object;
-        if ((this.id == null && other.id != null) || (this.id != null && !this.id.equals(other.id))) {
-            return false;
-        }
-        return true;
-    }
+	@Override
+	public boolean equals(Object object) {
+		// TODO: Warning - this method won't work in the case the id fields are not set
+		if (!(object instanceof FileDownloads)) {
+			return false;
+		}
+		FileDownloads other = (FileDownloads) object;
+		if ((this.id == null && other.id != null) || (this.id != null && !this.id.equals(other.id))) {
+			return false;
+		}
+		return true;
+	}
 
-    @Override
-    public String toString() {
-        return "com.strandls.hibernateormdemo.model.FileDownloads[ id=" + id + " ]";
-    }
-    
+	@Override
+	public String toString() {
+		return "com.strandls.hibernateormdemo.model.FileDownloads[ id=" + id + " ]";
+	}
 }

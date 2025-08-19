@@ -2,12 +2,12 @@ package com.strandls.file;
 
 import java.io.File;
 
-public class ApiContants {
+public class ApiConstants {
 
 	public static final String UPLOAD = "upload";
 	public static final String GET = "get";
 
-	public final static String ROOT_PATH = System.getProperty("user.home") + File.separatorChar + "apps"
+	public static final String ROOT_PATH = System.getProperty("user.home") + File.separatorChar + "apps"
 			+ File.separatorChar + "biodiv-image";
 
 	public static final String ORIGINAL = "original";

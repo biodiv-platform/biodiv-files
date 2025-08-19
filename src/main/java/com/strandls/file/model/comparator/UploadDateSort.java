@@ -13,5 +13,4 @@ public class UploadDateSort implements Comparator<MyUpload> {
 		}
 		return obj1.getDateUploaded().compareTo(obj2.getDateUploaded());
 	}
-	
 }

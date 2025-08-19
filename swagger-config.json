@@ -1,14 +1,19 @@
 {
-  "modelPackage": "com.strandls.file.model",
-  "apiPackage": "com.strandls.file.api",
-  "invokerPackage": "com.strandls.file",
-  "groupId": "biodiv",
-  "artifactId": "file-upload-client",
-  "artifactVersion": "1.0.0",
-  "fullJavaUtil": true,
-  "dateLibrary": "legacy",
-  "library": "jersey2",
-  "developerName": "Vilay Kandi",
-  "developerEmail": "vilayk@strandls.com",
-  "java8": true
+	"modelPackage": "com.strandls.file.model",
+	"apiPackage": "com.strandls.file.api",
+	"invokerPackage": "com.strandls.file",
+	"groupId": "biodiv",
+	"artifactId": "file-upload-client",
+	"artifactVersion": "0.0.21",
+	"fullJavaUtil": true,
+	"dateLibrary": "legacy",
+	"library": "jersey3",
+	"developerName": "Vilay Kandi",
+	"developerEmail": "vilayk@strandls.com",
+	"typeMappings": {
+		"FormDataBodyPart": "org.glassfish.jersey.media.multipart.FormDataBodyPart"
+	},
+	"importMappings": {
+		"FormDataBodyPart": "org.glassfish.jersey.media.multipart.FormDataBodyPart"
+	}
 }

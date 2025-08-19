@@ -1,17 +1,7 @@
 package com.strandls.file.util;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.Files;
 
-import java.util.UUID;
-
-import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry;
-import org.apache.commons.compress.archivers.sevenz.SevenZFile;
 import org.apache.tika.Tika;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,15 +19,12 @@ public class CompressedFileUploaderThread implements Runnable {
 	private MODULE module;
 	private FileUploadService fileUploadService;
 
-	/**
-	 * 
-	 */
+	/** */
 	public CompressedFileUploaderThread() {
 		super();
 	}
 
 	/**
-	 * 
 	 * @param userId
 	 * @param file
 	 * @param absDestinationPath
@@ -63,7 +50,6 @@ public class CompressedFileUploaderThread implements Runnable {
 		} catch (Exception e) {
 			logger.error(e.getMessage());
 		}
-
 	}
 
 	private void extractFilesToMyUploads(Long userId, File file, String absDestinationPath, String sourceDir,
@@ -74,5 +60,4 @@ public class CompressedFileUploaderThread implements Runnable {
 			AppUtil.parseZipFiles(absDestinationPath, file.getCanonicalPath(), module);
 		}
 	}
-
 }
