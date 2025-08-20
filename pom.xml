@@ -291,7 +291,7 @@
                 </configuration>
             </plugin>
 
-			<!-- Swagger OpenAPI Generator (generates openapi.json) -->
+			<!-- Swagger OpenAPI Generator (generates swagger.json) -->
             <plugin>
                 <groupId>io.swagger.core.v3</groupId>
                 <artifactId>swagger-maven-plugin-jakarta</artifactId>
@@ -304,17 +304,17 @@
                             <goal>resolve</goal>
                         </goals>
                         <configuration>
-                            <outputFileName>openapi</outputFileName>
+                            <outputFileName>swagger</outputFileName>
                             <outputFormat>JSON</outputFormat>
                             <outputPath>${project.build.directory}</outputPath>
                             <prettyPrint>true</prettyPrint>
                             <resourcePackages>
-                                <package>com.strandls.file</package>
+                                <package>${location}</package>
                             </resourcePackages>
                         </configuration>
                     </execution>
                 </executions>
-                <dependencies>
+                 <dependencies>
                     <dependency>
                         <groupId>jakarta.servlet</groupId>
                         <artifactId>jakarta.servlet-api</artifactId>
@@ -323,7 +323,7 @@
                 </dependencies>
             </plugin>
 
-			<!-- Modify openapi.json to add servers property -->
+			<!-- Modify swagger.json to add servers property -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
@@ -338,14 +338,14 @@
                         <configuration>
                             <mainClass>com.strandls.file.ModifyOpenApi</mainClass>
                             <arguments>
-                                <argument>${project.build.directory}/openapi.json</argument>
+                                <argument>${project.build.directory}/swagger.json</argument>
                             </arguments>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
 
-			<!-- Copy modified openapi.json to swagger-ui folder -->
+			<!-- Copy modified swagger.json to swagger-ui folder -->
             <plugin>
                 <artifactId>maven-resources-plugin</artifactId>
                 <version>3.3.1</version>
@@ -362,7 +362,7 @@
                                 <resource>
                                     <directory>${project.build.directory}</directory>
                                     <includes>
-                                        <include>openapi.json</include>
+                                        <include>swagger.json</include>
                                     </includes>
                                 </resource>
                             </resources>
@@ -378,7 +378,9 @@
                 <executions>
                     <execution>
                         <phase>prepare-package</phase>
-                        <goals><goal>unpack</goal></goals>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
                         <configuration>
                             <artifactItems>
                                 <artifactItem>
@@ -411,19 +413,19 @@
                     <replacements>
                         <replacement>
                             <token>https://petstore.swagger.io/v2/swagger.json</token>
-                            <value>/files-api/swagger-ui/openapi.json</value>
+                            <value>/files-api/swagger-ui/swagger.json</value>
                         </replacement>
                     </replacements>
                 </configuration>
             </plugin>
 
-			<!-- WAR Plugin: Add Swagger UI files and openapi.json -->
+			<!-- WAR Plugin: Add Swagger UI files and swagger.json -->
             <plugin>
                 <artifactId>maven-war-plugin</artifactId>
                 <version>${maven-war-plugin.version}</version>
                 <configuration>
-                    <warName>files-api</warName>
-                    <warSourceDirectory>src/main/webapp</warSourceDirectory>
+                    <warName>${war-name}</warName>
+                    <warSourceDirectory>${srcDir}</warSourceDirectory>
                     <webResources combine.children="append">
                         <resource>
                             <directory>${project.build.directory}/swagger-ui/META-INF/resources/webjars/swagger-ui/${swagger-ui.version}</directory>
@@ -435,7 +437,7 @@
                         <resource>
                             <directory>${project.build.directory}/swagger-ui</directory>
                             <includes>
-                                <include>openapi.json</include>
+                                <include>swagger.json</include>
                             </includes>
                             <targetPath>swagger-ui</targetPath>
                         </resource>
@@ -443,7 +445,7 @@
                 </configuration>
             </plugin>
 
-			<!-- OpenAPI Generator CLI: generate SDK from openapi.json -->
+			<!-- OpenAPI Generator CLI: generate SDK from swagger.json -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
@@ -455,25 +457,34 @@
                         <goals>
                             <goal>java</goal>
                         </goals>
+                        <configuration>
+                            <mainClass>org.openapitools.codegen.OpenAPIGenerator</mainClass>
+                            <arguments>
+                                <argument>generate</argument>
+                                <argument>-i</argument>
+                                <argument>${project.build.directory}/swagger.json</argument>
+                                <argument>-g</argument>
+                                <argument>java</argument>
+                                <argument>-o</argument>
+                                <argument>target/sdk</argument>
+                                <argument>--skip-validate-spec</argument>
+                                <argument>-c</argument>
+                                <argument>swagger-config.json</argument>
+                            </arguments>
+                            <includeProjectDependencies>true</includeProjectDependencies>
+                            <includePluginDependencies>true</includePluginDependencies>
+                        </configuration>
                     </execution>
                 </executions>
-                <configuration>
-                    <executable>java</executable>
-                    <mainClass>org.openapitools.codegen.OpenAPIGenerator</mainClass>
-                    <commandlineArgs>
-                        generate -i ${project.build.directory}/openapi.json -g java -o target/sdk --skip-validate-spec -c swagger-config.json
-                    </commandlineArgs>
-                    <includeProjectDependencies>true</includeProjectDependencies>
-                    <includePluginDependencies>true</includePluginDependencies>
-                </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.openapitools</groupId>
-                        <artifactId>openapi-generator-cli</artifactId>
-                        <version>${openapi-generator-cli.version}</version>
-                    </dependency>
-                </dependencies>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.openapitools</groupId>
+                            <artifactId>openapi-generator-cli</artifactId>
+                            <version>${openapi-generator-cli.version}</version>
+                        </dependency>
+                    </dependencies>
             </plugin>
+
         </plugins>
-	</build>
+    </build>
 </project>
