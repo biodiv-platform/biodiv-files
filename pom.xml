@@ -52,12 +52,12 @@
         <repository>
             <id>central</id>
             <name>jfrog-releases</name>
-            <url>https://devartifactory.indiabiodiversity.org/libs-release</url>
+            <url>https://venus.strandls.com/artifactory/libs-release</url>
         </repository>
         <snapshotRepository>
             <id>snapshots</id>
             <name>jfrog-snapshots</name>
-            <url>https://devartifactory.indiabiodiversity.org/libs-snapshot</url>
+            <url>https://venus.strandls.com/artifactory/libs-snapshot</url>
         </snapshotRepository>
     </distributionManagement>
 
@@ -68,13 +68,13 @@
             </snapshots>
             <id>central</id>
             <name>libs-release</name>
-            <url>https://devartifactory.indiabiodiversity.org/libs-release</url>
+            <url>https://venus.strandls.com/artifactory/libs-release</url>
         </repository>
         <repository>
             <snapshots />
             <id>snapshots</id>
             <name>libs-snapshot</name>
-            <url>https://devartifactory.indiabiodiversity.org/libs-snapshot</url>
+            <url>https://venus.strandls.com/artifactory/libs-snapshot</url>
         </repository>
     </repositories>
 
@@ -215,7 +215,7 @@
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-core</artifactId>
-            <version>2.8.0</version>
+            <version>3.2.3</version>
         </dependency>
 
 		<!-- Internal strandls dependencies -->
@@ -431,7 +431,7 @@
                 <artifactId>maven-war-plugin</artifactId>
                 <version>${maven-war-plugin.version}</version>
                 <configuration>
-                    <warName>${war-name}</warName>
+                    <warName>${warName}</warName>
                     <warSourceDirectory>${srcDir}</warSourceDirectory>
                     <webResources combine.children="append">
                         <resource>
