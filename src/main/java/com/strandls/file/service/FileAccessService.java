@@ -10,8 +10,12 @@ import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Stream;
@@ -31,6 +35,7 @@ import com.strandls.file.dao.FileAccessDao;
 import com.strandls.file.model.FileDownloadCredentials;
 import com.strandls.file.model.FileDownloads;
 import com.strandls.file.util.AppUtil;
+import com.strandls.file.util.AppUtil.BASE_FOLDERS;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -151,4 +156,54 @@ public class FileAccessService {
 				.header("Content-Disposition", "attachment; filename=\"" + inputFile.getName() + "\"")
 				.cacheControl(AppUtil.getCacheControl()).build();
 	}
+
+	public Map<String, Object> listFile() {
+
+		List<FileDownloads> files = fileAccessDao.findAll();
+
+		String basePath = storageBasePath + File.separatorChar + "data-archive" + File.separatorChar + "gbif"
+				+ File.separatorChar;
+
+		Map<String, Object> response = new HashMap<>();
+		response.put("filePath", basePath);
+		response.put("files", files);
+
+		return response;
+	}
+
+	/**
+	 * Delete Files
+	 */
+	public boolean deleteDwcFiles(String fileName) throws IOException {
+		boolean isDeleted = false;
+		String basePath = storageBasePath + File.separatorChar + "data-archive" + File.separatorChar + "gbif"
+				+ File.separatorChar;
+		File f = new File(basePath + fileName);
+		if (f.exists() && java.nio.file.Files.isRegularFile(Paths.get(f.toURI()))
+				&& f.getCanonicalPath().startsWith(basePath)) {
+			isDeleted = f.delete();
+		}
+		return isDeleted;
+	}
+
+	public List<FileDownloads> deleteFile(String fileName) {
+		try {
+			boolean deleted = deleteDwcFiles(fileName);
+			if (!deleted) {
+				return null;
+			}
+		} catch (IOException e) {
+			logger.error(e.getMessage());
+		}
+		List<FileDownloads> fileDownloads = fileAccessDao.findByFileName(fileName);
+
+		for (FileDownloads file : fileDownloads) {
+			file.setIsDeleted(true);
+			file.setStatus("Deleted");
+			fileAccessDao.update(file);
+		}
+
+		return fileDownloads;
+	}
+
 }

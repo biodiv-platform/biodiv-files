@@ -2,6 +2,9 @@ package com.strandls.file.dao;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.query.Query;
+
+import java.util.List;
 
 import javax.inject.Inject;
 
@@ -27,12 +30,29 @@ public class FileAccessDao extends AbstractDao<FileDownloads, Long> {
 		try {
 			entity = session.get(FileDownloads.class, id);
 		} catch (Exception e) {
-			 logger.error(e.getMessage());
+			logger.error(e.getMessage());
 		} finally {
 			session.close();
 		}
 
 		return entity;
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<FileDownloads> findByFileName(String fileName) {
+		String qry = "from FileDownloads where fileName = :fileName";
+		Session session = sessionFactory.openSession();
+		List<FileDownloads> result = null;
+		try {
+			Query<FileDownloads> query = session.createQuery(qry);
+			query.setParameter("fileName", fileName);
+			result = query.getResultList();
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+		} finally {
+			session.close();
+		}
+		return result;
 	}
 
 }

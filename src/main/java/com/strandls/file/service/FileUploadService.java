@@ -35,6 +35,8 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.io.Files;
 import com.strandls.authentication_utility.util.AuthUtil;
+import com.strandls.file.dao.FileAccessDao;
+import com.strandls.file.model.FileDownloads;
 import com.strandls.file.model.FileUploadModel;
 import com.strandls.file.model.MobileFileUpload;
 import com.strandls.file.model.MyUpload;
@@ -52,6 +54,9 @@ public class FileUploadService {
 
 	@Inject
 	private UploadedMetaDataService uploadedMetaDataService;
+
+	@Inject
+	private FileAccessDao fileAccessDao;
 
 	String storageBasePath = null;
 	SimpleDateFormat sdf;
@@ -645,5 +650,18 @@ public class FileUploadService {
 			logger.error(ex.getMessage());
 		}
 		return finalPaths;
+	}
+
+	public void saveDwcFile(String createdFileName) {
+		FileDownloads download = new FileDownloads();
+		try {
+			download.setCreatedDate(new Date());
+			download.setFileName(createdFileName);
+			download.setStatus("READY");
+			download = fileAccessDao.save(download);
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+		}
+
 	}
 }
