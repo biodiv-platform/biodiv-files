@@ -100,31 +100,24 @@ public class FileAccessDao extends AbstractDao<FileDownloads, Long> {
 	@SuppressWarnings("unchecked")
 	public Long getTotalFileLogs(Boolean deleted) {
 
+		String qry = "select count(id) from file_downloads";
 		Session session = sessionFactory.openSession();
-		Long total = 0L;
 
 		try {
-			String qry = "select count(id) from file_downloads";
-
 			if (deleted != null) {
-				qry += " and is_deleted = :deleted";
+				qry += " where is_deleted = :deleted";
 			}
-
 			Query<Number> query = session.createNativeQuery(qry);
-
 			if (deleted != null) {
 				query.setParameter("deleted", deleted);
 			}
-
-			total = query.getSingleResult().longValue();
-
+			return query.getSingleResult().longValue();
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
+			return 0L;
 		} finally {
 			session.close();
 		}
-
-		return total;
 	}
 
 }
