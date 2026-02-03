@@ -652,16 +652,4 @@ public class FileUploadService {
 		return finalPaths;
 	}
 
-	public void saveDwcFile(String createdFileName) {
-		FileDownloads download = new FileDownloads();
-		try {
-			download.setCreatedDate(new Date());
-			download.setFileName(createdFileName);
-			download.setStatus("READY");
-			download = fileAccessDao.save(download);
-		} catch (Exception e) {
-			logger.error(e.getMessage());
-		}
-
-	}
 }

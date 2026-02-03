@@ -94,7 +94,7 @@ public class FileAccessService {
 		return download;
 	}
 
-	public Response downloadFile(FileDownloadCredentials credentials, Boolean admin) throws IOException {
+	public Response downloadFile(FileDownloadCredentials credentials) throws IOException {
 		String dirPath = storageBasePath + File.separatorChar + "data-archive" + File.separatorChar + "gbif"
 				+ File.separatorChar;
 		Path path = Paths.get(dirPath);
@@ -107,9 +107,8 @@ public class FileAccessService {
 			throw new FileNotFoundException("Folder is empty");
 		}
 		File inputFile = file.get().toFile();
-		if (!admin) {
-			saveDownload(credentials, inputFile.getName());
-		}
+		saveDownload(credentials, inputFile.getName());
+
 		InputStream in = new FileInputStream(inputFile);
 		String contentType = URLConnection.guessContentTypeFromStream(in);
 		StreamingOutput sout;
@@ -161,11 +160,10 @@ public class FileAccessService {
 
 		List<FileDownloads> files = fileAccessDao.findAll();
 
-		String basePath = storageBasePath + File.separatorChar + "data-archive" + File.separatorChar + "gbif"
-				+ File.separatorChar;
+		String path = "biodiv" + File.separatorChar + "data-archive" + File.separatorChar + "gbif" + File.separatorChar;
 
 		Map<String, Object> response = new HashMap<>();
-		response.put("filePath", basePath);
+		response.put("filePath", path);
 		response.put("files", files);
 
 		return response;
@@ -199,11 +197,36 @@ public class FileAccessService {
 
 		for (FileDownloads file : fileDownloads) {
 			file.setIsDeleted(true);
-			file.setStatus("Deleted");
+			file.setStatus("DELETED");
 			fileAccessDao.update(file);
 		}
 
 		return fileDownloads;
+	}
+
+	public FileDownloads createDownload() {
+		FileDownloads download = new FileDownloads();
+		try {
+			download.setCreatedDate(new Date());
+			download.setDate(new Date());
+			download.setFileName("");
+			download.setStatus("IN_PROGRESS");
+			download = fileAccessDao.save(download);
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+		}
+		return download;
+	}
+
+	public void saveDwcFile(String createdFileName, FileDownloads download) {
+		try {
+			download.setStatus("READY");
+			download.setFileName(createdFileName);
+			download = fileAccessDao.update(download);
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+		}
+
 	}
 
 }

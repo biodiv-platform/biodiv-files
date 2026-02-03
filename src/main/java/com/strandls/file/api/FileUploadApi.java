@@ -4,7 +4,7 @@ import com.strandls.authentication_utility.filter.ValidateUser;
 import com.strandls.authentication_utility.util.AuthUtil;
 import com.strandls.file.ApiContants;
 import com.strandls.file.dto.FilesDTO;
-import com.strandls.file.model.FileDownloadCredentials;
+import com.strandls.file.model.FileDownloads;
 import com.strandls.file.model.FileUploadModel;
 import com.strandls.file.model.MobileFileUpload;
 import com.strandls.file.model.MyUpload;
@@ -54,6 +54,9 @@ public class FileUploadApi {
 
 	@Inject
 	private FileUploadService fileUploadService;
+
+	@Inject
+	private FileAccessService accessService;
 
 	@POST
 	@Path(ApiContants.MY_UPLOADS + ApiContants.MOBILE)
@@ -155,11 +158,12 @@ public class FileUploadApi {
 			return Response.status(Status.UNAUTHORIZED).build();
 
 		}
-
 		// 🔒 Prevent concurrent exports
 		if (!DWC_EXPORT_IN_PROGRESS.compareAndSet(false, true)) {
 			return Response.status(Status.CONFLICT).entity("export already in progress").build();
 		}
+
+		FileDownloads download = accessService.createDownload();
 
 		String filePath = "/app/configurations/scripts/";
 		String csvFilePath = "/app/data/biodiv/data-archive/gbif/" + AppUtil.getDatePrefix() + "dWC.csv";
@@ -172,7 +176,7 @@ public class FileUploadApi {
 
 			if (exitCode == 0) {
 				String createdFileName = new File(csvFilePath).getName();
-				fileUploadService.saveDwcFile(createdFileName);
+				accessService.saveDwcFile(createdFileName, download);
 				return Response.status(Status.OK).entity("File Creation Successful!").build();
 
 			}
