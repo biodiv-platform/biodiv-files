@@ -55,8 +55,8 @@ public class FileDownloads implements Serializable {
 	@JoinColumn(name = "user_id", referencedColumnName = "id")
 	@ManyToOne(optional = false)
 	private FileDownloadCredentials userId;
-	@Column(name = "status", columnDefinition = "string default READY")
-	private String status;
+	@Column(name = "status")
+	private String status = "READY";
 
 	public FileDownloads() {
 	}
