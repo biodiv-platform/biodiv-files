@@ -156,15 +156,14 @@ public class FileAccessService {
 				.cacheControl(AppUtil.getCacheControl()).build();
 	}
 
-	public Map<String, Object> listFile() {
+	public Map<String, Object> listFile(Integer offset, Integer limit, Boolean deleted) {
 
-		List<FileDownloads> files = fileAccessDao.findAll();
-
+		List<FileDownloads> files = fileAccessDao.getfilesList(offset, limit, deleted);
 		String path = "biodiv" + File.separatorChar + "data-archive" + File.separatorChar + "gbif" + File.separatorChar;
-
 		Map<String, Object> response = new HashMap<>();
 		response.put("filePath", path);
 		response.put("files", files);
+		response.put("total", fileAccessDao.getTotalDownloadLogs(deleted));
 
 		return response;
 	}

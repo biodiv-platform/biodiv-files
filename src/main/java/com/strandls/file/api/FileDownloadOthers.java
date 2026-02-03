@@ -6,6 +6,7 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -58,7 +59,9 @@ public class FileDownloadOthers {
 	@Produces(MediaType.APPLICATION_JSON)
 
 	@ValidateUser
-	public Response listFile(@Context HttpServletRequest request) {
+	public Response listFile(@Context HttpServletRequest request,
+			@DefaultValue("0") @QueryParam("offset") String Offset,
+			@DefaultValue("15") @QueryParam("limit") String Limit, @QueryParam("deleted") Boolean deleted) {
 		try {
 
 			CommonProfile profile = AuthUtil.getProfileFromRequest(request);
@@ -68,7 +71,9 @@ public class FileDownloadOthers {
 				return Response.status(Status.UNAUTHORIZED).build();
 
 			}
-			Map<String, Object> result = accessService.listFile();
+			Integer offset = Integer.parseInt(Offset);
+			Integer limit = Integer.parseInt(Limit);
+			Map<String, Object> result = accessService.listFile(offset, limit, deleted);
 			return Response.status(Status.OK).entity(result).build();
 
 		} catch (Exception ex) {
