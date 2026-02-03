@@ -69,7 +69,7 @@ public class FileAccessDao extends AbstractDao<FileDownloads, Long> {
 		Root<FileDownloads> root = cr.from(FileDownloads.class);
 
 		if (deleted != null) {
-			cr.select(root).where(cb.equal(root.get("is_deleted"), deleted)).orderBy(cb.desc(root.get("id")));
+			cr.select(root).where(cb.equal(root.get("isDeleted"), deleted)).orderBy(cb.desc(root.get("id")));
 
 		} else {
 			cr.select(root).orderBy(cb.desc(root.get("id")));
