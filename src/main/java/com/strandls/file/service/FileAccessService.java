@@ -163,7 +163,7 @@ public class FileAccessService {
 		Map<String, Object> response = new HashMap<>();
 		response.put("filePath", path);
 		response.put("files", files);
-		response.put("total", fileAccessDao.getTotalDownloadLogs(deleted));
+		response.put("total", fileAccessDao.getTotalFileLogs(deleted));
 
 		return response;
 	}
