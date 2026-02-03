@@ -43,8 +43,28 @@ public class FileDownloadOthers {
 		try {
 			FileDownloadCredentials credentials = accessService.getCredentials(accessKey);
 			if (credentials != null) {
-				return accessService.downloadFile(credentials);
+				return accessService.downloadFile(credentials, false);
 			}
+			return Response.status(Status.FORBIDDEN).build();
+		} catch (Exception ex) {
+			logger.error(ex.getMessage());
+			return Response.status(Status.BAD_REQUEST).entity(ex.getMessage()).build();
+		}
+	}
+
+	@Path("file/download")
+	@GET
+	public Response getFileAdmin(@Context HttpServletRequest request) {
+		try {
+
+			CommonProfile profile = AuthUtil.getProfileFromRequest(request);
+
+			JSONArray roles = (JSONArray) profile.getAttribute("roles");
+			if (roles.contains("ROLE_ADMIN")) {
+				return accessService.downloadFile(null, true);
+
+			}
+
 			return Response.status(Status.FORBIDDEN).build();
 		} catch (Exception ex) {
 			logger.error(ex.getMessage());

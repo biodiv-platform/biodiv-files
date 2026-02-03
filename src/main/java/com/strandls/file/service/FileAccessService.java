@@ -10,7 +10,6 @@ import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -35,7 +34,6 @@ import com.strandls.file.dao.FileAccessDao;
 import com.strandls.file.model.FileDownloadCredentials;
 import com.strandls.file.model.FileDownloads;
 import com.strandls.file.util.AppUtil;
-import com.strandls.file.util.AppUtil.BASE_FOLDERS;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,7 +94,7 @@ public class FileAccessService {
 		return download;
 	}
 
-	public Response downloadFile(FileDownloadCredentials credentials) throws IOException {
+	public Response downloadFile(FileDownloadCredentials credentials, Boolean admin) throws IOException {
 		String dirPath = storageBasePath + File.separatorChar + "data-archive" + File.separatorChar + "gbif"
 				+ File.separatorChar;
 		Path path = Paths.get(dirPath);
@@ -109,7 +107,9 @@ public class FileAccessService {
 			throw new FileNotFoundException("Folder is empty");
 		}
 		File inputFile = file.get().toFile();
-		saveDownload(credentials, inputFile.getName());
+		if (!admin) {
+			saveDownload(credentials, inputFile.getName());
+		}
 		InputStream in = new FileInputStream(inputFile);
 		String contentType = URLConnection.guessContentTypeFromStream(in);
 		StreamingOutput sout;
