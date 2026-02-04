@@ -101,10 +101,12 @@ public class FileAccessService {
 
 	private FileDownloads saveDownload(FileDownloadCredentials credentials, String fileName) {
 		FileDownloads download = new FileDownloads();
+		FileDownloads file = fileAccessDao.findFirstByFileName(fileName);
 		try {
 			download.setUserId(credentials);
 			download.setDate(new Date());
 			download.setFileName(fileName);
+			download.setCreatedDate(file.getCreatedDate());
 			download = fileAccessDao.save(download);
 		} catch (Exception e) {
 			logger.error(e.getMessage());
@@ -226,8 +228,7 @@ public class FileAccessService {
 		try {
 
 			download.setCreatedDate(new Date());
-			download.setDate(new Date());
-			download.setFileName("");
+			download.setFileName("EXPORTING...");
 			download.setIsDeleted(false);
 			download.setStatus("IN_PROGRESS");
 			download.setUserId(credentials);

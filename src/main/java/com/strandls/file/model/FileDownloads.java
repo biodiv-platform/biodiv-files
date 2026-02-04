@@ -8,7 +8,6 @@ package com.strandls.file.model;
 import java.io.Serializable;
 import java.util.Date;
 
-import javax.enterprise.inject.Default;
 import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -39,7 +38,6 @@ public class FileDownloads implements Serializable {
 	@Column(name = "id")
 	private Integer id;
 	@Basic(optional = false)
-	@NotNull
 	@Column(name = "date")
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date date;

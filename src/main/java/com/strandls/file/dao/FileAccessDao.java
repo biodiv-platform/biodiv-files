@@ -59,6 +59,30 @@ public class FileAccessDao extends AbstractDao<FileDownloads, Long> {
 		return result;
 	}
 
+	@SuppressWarnings("unchecked")
+	public FileDownloads findFirstByFileName(String fileName) {
+
+		String qry = "from FileDownloads where fileName = :fileName order by createdDate asc";
+
+		Session session = sessionFactory.openSession();
+		FileDownloads result = null;
+
+		try {
+			Query<FileDownloads> query = session.createQuery(qry);
+			query.setParameter("fileName", fileName);
+			query.setMaxResults(1);
+
+			result = query.uniqueResult();
+
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+		} finally {
+			session.close();
+		}
+
+		return result;
+	}
+
 	public List<FileDownloads> getfilesList(Integer offset, Integer limit, Boolean deleted) {
 
 		Session session = sessionFactory.openSession();
