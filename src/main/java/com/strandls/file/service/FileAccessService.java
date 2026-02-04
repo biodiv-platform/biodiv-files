@@ -81,6 +81,24 @@ public class FileAccessService {
 		return credentials;
 	}
 
+	@SuppressWarnings({ "unchecked" })
+	public FileDownloadCredentials getCredentialsById(int id) {
+		Session session = factory.openSession();
+		FileDownloadCredentials credentials = null;
+		String sql = "from FileDownloadCredentials f where f.id = :id";
+		try {
+			Query<FileDownloadCredentials> query = session.createQuery(sql);
+			query.setParameter("id", id);
+			credentials = query.getSingleResult();
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+
+		} finally {
+			session.close();
+		}
+		return credentials;
+	}
+
 	private FileDownloads saveDownload(FileDownloadCredentials credentials, String fileName) {
 		FileDownloads download = new FileDownloads();
 		try {
@@ -203,18 +221,16 @@ public class FileAccessService {
 		return fileDownloads;
 	}
 
-	public FileDownloads createDownload() {
+	public FileDownloads createDownload(FileDownloadCredentials credentials) {
 		FileDownloads download = new FileDownloads();
 		try {
-			FileDownloadCredentials user = new FileDownloadCredentials();
 
 			download.setCreatedDate(new Date());
 			download.setDate(new Date());
 			download.setFileName("");
 			download.setIsDeleted(false);
 			download.setStatus("IN_PROGRESS");
-			user.setId(1);
-			download.setUserId(user);
+			download.setUserId(credentials);
 			download = fileAccessDao.save(download);
 		} catch (Exception e) {
 			logger.error(e.getMessage());
