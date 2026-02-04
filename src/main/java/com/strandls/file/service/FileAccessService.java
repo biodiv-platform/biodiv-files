@@ -206,10 +206,15 @@ public class FileAccessService {
 	public FileDownloads createDownload() {
 		FileDownloads download = new FileDownloads();
 		try {
+			FileDownloadCredentials user = new FileDownloadCredentials();
+
 			download.setCreatedDate(new Date());
 			download.setDate(new Date());
 			download.setFileName("");
+			download.setIsDeleted(false);
 			download.setStatus("IN_PROGRESS");
+			user.setId(1);
+			download.setUserId(user);
 			download = fileAccessDao.save(download);
 		} catch (Exception e) {
 			logger.error(e.getMessage());
