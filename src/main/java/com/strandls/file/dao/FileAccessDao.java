@@ -62,7 +62,7 @@ public class FileAccessDao extends AbstractDao<FileDownloads, Long> {
 	@SuppressWarnings("unchecked")
 	public FileDownloads findFirstByFileName(String fileName) {
 
-		String qry = "from FileDownloads where fileName = :fileName order by createdDate asc";
+		String qry = "from FileDownloads where fileName = :fileName order by createdDate desc";
 
 		Session session = sessionFactory.openSession();
 		FileDownloads result = null;

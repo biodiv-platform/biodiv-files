@@ -37,7 +37,6 @@ public class FileDownloads implements Serializable {
 	@Basic(optional = false)
 	@Column(name = "id")
 	private Integer id;
-	@Basic(optional = false)
 	@Column(name = "date")
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date date;
