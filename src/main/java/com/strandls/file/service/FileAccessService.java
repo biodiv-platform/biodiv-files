@@ -241,7 +241,7 @@ public class FileAccessService {
 	public void saveDwcFile(String createdFileName, FileDownloads download) {
 		try {
 			download.setStatus("READY");
-			download.setFileName(createdFileName);
+			download.setFileName(createdFileName + ".zip");
 			download = fileAccessDao.update(download);
 		} catch (Exception e) {
 			logger.error(e.getMessage());
