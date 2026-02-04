@@ -12,6 +12,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Stream;
@@ -78,12 +81,32 @@ public class FileAccessService {
 		return credentials;
 	}
 
+	@SuppressWarnings({ "unchecked" })
+	public FileDownloadCredentials getCredentialsById(int id) {
+		Session session = factory.openSession();
+		FileDownloadCredentials credentials = null;
+		String sql = "from FileDownloadCredentials f where f.id = :id";
+		try {
+			Query<FileDownloadCredentials> query = session.createQuery(sql);
+			query.setParameter("id", id);
+			credentials = query.getSingleResult();
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+
+		} finally {
+			session.close();
+		}
+		return credentials;
+	}
+
 	private FileDownloads saveDownload(FileDownloadCredentials credentials, String fileName) {
 		FileDownloads download = new FileDownloads();
+		FileDownloads file = fileAccessDao.findFirstByFileName(fileName);
 		try {
 			download.setUserId(credentials);
 			download.setDate(new Date());
 			download.setFileName(fileName);
+			download.setCreatedDate(file.getCreatedDate());
 			download = fileAccessDao.save(download);
 		} catch (Exception e) {
 			logger.error(e.getMessage());
@@ -105,6 +128,7 @@ public class FileAccessService {
 		}
 		File inputFile = file.get().toFile();
 		saveDownload(credentials, inputFile.getName());
+
 		InputStream in = new FileInputStream(inputFile);
 		String contentType = URLConnection.guessContentTypeFromStream(in);
 		StreamingOutput sout;
@@ -151,4 +175,79 @@ public class FileAccessService {
 				.header("Content-Disposition", "attachment; filename=\"" + inputFile.getName() + "\"")
 				.cacheControl(AppUtil.getCacheControl()).build();
 	}
+
+	public Map<String, Object> listFile(Integer offset, Integer limit, Boolean deleted) {
+
+		List<FileDownloads> files = fileAccessDao.getfilesList(offset, limit, deleted);
+		String path = "biodiv" + File.separatorChar + "data-archive" + File.separatorChar + "gbif" + File.separatorChar;
+		Map<String, Object> response = new HashMap<>();
+		response.put("filePath", path);
+		response.put("files", files);
+		response.put("total", fileAccessDao.getTotalFileLogs(deleted));
+
+		return response;
+	}
+
+	/**
+	 * Delete Files
+	 */
+	public boolean deleteDwcFiles(String fileName) throws IOException {
+		boolean isDeleted = false;
+		String basePath = storageBasePath + File.separatorChar + "data-archive" + File.separatorChar + "gbif"
+				+ File.separatorChar;
+		File f = new File(basePath + fileName);
+		if (f.exists() && java.nio.file.Files.isRegularFile(Paths.get(f.toURI()))
+				&& f.getCanonicalPath().startsWith(basePath)) {
+			isDeleted = f.delete();
+		}
+		return isDeleted;
+	}
+
+	public List<FileDownloads> deleteFile(String fileName) {
+		try {
+			boolean deleted = deleteDwcFiles(fileName);
+			if (!deleted) {
+				return null;
+			}
+		} catch (IOException e) {
+			logger.error(e.getMessage());
+		}
+		List<FileDownloads> fileDownloads = fileAccessDao.findByFileName(fileName);
+
+		for (FileDownloads file : fileDownloads) {
+			file.setIsDeleted(true);
+			file.setStatus("DELETED");
+			fileAccessDao.update(file);
+		}
+
+		return fileDownloads;
+	}
+
+	public FileDownloads createDownload(FileDownloadCredentials credentials) {
+		FileDownloads download = new FileDownloads();
+		try {
+
+			download.setCreatedDate(new Date());
+			download.setFileName("EXPORTING...");
+			download.setIsDeleted(false);
+			download.setStatus("IN_PROGRESS");
+			download.setUserId(credentials);
+			download = fileAccessDao.save(download);
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+		}
+		return download;
+	}
+
+	public void saveDwcFile(String createdFileName, FileDownloads download) {
+		try {
+			download.setStatus("READY");
+			download.setFileName(createdFileName + ".zip");
+			download = fileAccessDao.update(download);
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+		}
+
+	}
+
 }

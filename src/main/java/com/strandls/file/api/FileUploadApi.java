@@ -4,9 +4,12 @@ import com.strandls.authentication_utility.filter.ValidateUser;
 import com.strandls.authentication_utility.util.AuthUtil;
 import com.strandls.file.ApiContants;
 import com.strandls.file.dto.FilesDTO;
+import com.strandls.file.model.FileDownloadCredentials;
+import com.strandls.file.model.FileDownloads;
 import com.strandls.file.model.FileUploadModel;
 import com.strandls.file.model.MobileFileUpload;
 import com.strandls.file.model.MyUpload;
+import com.strandls.file.service.FileAccessService;
 import com.strandls.file.service.FileUploadService;
 import com.strandls.file.util.AppUtil;
 import com.strandls.file.util.AppUtil.BASE_FOLDERS;
@@ -17,6 +20,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import net.minidev.json.JSONArray;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -39,6 +43,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Path(ApiContants.UPLOAD)
 @Api("Upload")
@@ -46,8 +51,13 @@ public class FileUploadApi {
 
 	private static final Logger logger = LoggerFactory.getLogger(FileUploadApi.class);
 
+	private static final AtomicBoolean DWC_EXPORT_IN_PROGRESS = new AtomicBoolean(false);
+
 	@Inject
 	private FileUploadService fileUploadService;
+
+	@Inject
+	private FileAccessService accessService;
 
 	@POST
 	@Path(ApiContants.MY_UPLOADS + ApiContants.MOBILE)
@@ -136,28 +146,64 @@ public class FileUploadApi {
 
 	@GET
 	@Path(ApiContants.DWCFILE)
+	@ValidateUser
 	@Produces(MediaType.TEXT_PLAIN)
-
-	@ApiOperation(value = "Mapping of Document", notes = "Returns Document", response = Response.class)
+	@ApiOperation(value = "", notes = "Returns Document", response = Response.class)
 	@ApiResponses(value = { @ApiResponse(code = 500, message = "ERROR", response = String.class) })
-	public Response createDwcFILE() {
-		// folder where script is placed
+	public Response createDwcFILE(@Context HttpServletRequest request) {
+
+		CommonProfile profile = AuthUtil.getProfileFromRequest(request);
+
+		JSONArray roles = (JSONArray) profile.getAttribute("roles");
+		if (!roles.contains("ROLE_ADMIN")) {
+			return Response.status(Status.UNAUTHORIZED).build();
+
+		}
+		// 🔒 Prevent concurrent exports
+		if (!DWC_EXPORT_IN_PROGRESS.compareAndSet(false, true)) {
+			return Response.status(Status.CONFLICT).entity("export already in progress").build();
+		}
+		FileDownloadCredentials credentials = accessService.getCredentialsById(1);
+
+		FileDownloads download = null;
+
+		if (credentials != null) {
+			download = accessService.createDownload(credentials);
+		}
+
 		String filePath = "/app/configurations/scripts/";
-		// folder where the new file will be placed
 		String csvFilePath = "/app/data/biodiv/data-archive/gbif/" + AppUtil.getDatePrefix() + "dWC.csv";
 		String script = "gbif_dwc.sh";
+
 		try {
 			Process process = Runtime.getRuntime().exec("sh " + script + " " + csvFilePath, null, new File(filePath));
+
 			int exitCode = process.waitFor();
-			if (exitCode == 0)
+
+			if (exitCode == 0) {
+				String createdFileName = new File(csvFilePath).getName();
+				if (download != null) {
+					accessService.saveDwcFile(createdFileName, download);
+				}
 				return Response.status(Status.OK).entity("File Creation Successful!").build();
+
+			}
+
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity("File Creation Failed").build();
+
 		} catch (InterruptedException ie) {
 			logger.error("InterruptedException: ", ie);
 			Thread.currentThread().interrupt();
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity("Export interrupted").build();
+
 		} catch (Exception e) {
+			logger.error("Export failed", e);
 			return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
+
+		} finally {
+			// 🔓 Always release lock
+			DWC_EXPORT_IN_PROGRESS.set(false);
 		}
-		return Response.status(Status.BAD_REQUEST).entity("File Creation Failed").build();
 	}
 
 	@POST
