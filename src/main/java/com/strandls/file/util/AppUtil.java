@@ -181,9 +181,11 @@ public class AppUtil {
 	public static boolean generateFile(String command) {
 		boolean isFileGenerated = false;
 		try {
+			logger.info("[GENERATE_FILE] Executing command: {}", command);
 			isFileGenerated = executeCommandWithExitValue(command);
+			logger.info("[GENERATE_FILE] Command execution result: {}", isFileGenerated);
 		} catch (Exception ex) {
-			logger.error(ex.getMessage());
+			logger.error("[GENERATE_FILE] Exception: {}", ex.getMessage());
 		}
 		return isFileGenerated;
 	}
@@ -357,12 +359,17 @@ public class AppUtil {
 				String[] commands = { "/bin/sh", "-c", command };
 				p = Runtime.getRuntime().exec(commands);
 				output = p.waitFor(5, TimeUnit.SECONDS);
+				int exitCode = output ? p.exitValue() : -1;
+				logger.debug("[EXEC_CMD] Command completed in time: {}, exit code: {}", output, exitCode);
+				if (exitCode != 0 && output) {
+					logger.error("[EXEC_CMD] Command failed with exit code: {}", exitCode);
+				}
 			}
 		} catch (InterruptedException ie) {
-			logger.error("InterruptedException: ", ie);
+			logger.error("[EXEC_CMD] InterruptedException: ", ie);
 			Thread.currentThread().interrupt();
 		} catch (Exception ex) {
-			logger.error(ex.getMessage());
+			logger.error("[EXEC_CMD] Exception: {}", ex.getMessage());
 		}
 		return output;
 	}

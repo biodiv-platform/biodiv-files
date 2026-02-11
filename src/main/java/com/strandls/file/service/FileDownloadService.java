@@ -141,12 +141,15 @@ public class FileDownloadService {
 	public Response getImage(HttpServletRequest req, String directory, String fileName, Integer width, Integer height,
 			String format, String fit, boolean preserve) {
 		try {
+			logger.info("[WEBP] getImage called - directory: {}, fileName: {}, width: {}, height: {}, format: {}, fit: {}, preserve: {}",
+					directory, fileName, width, height, format, fit, preserve);
 
 			String dirPath = storageBasePath + File.separatorChar + directory + File.separatorChar;
 			String fileLocation = dirPath + fileName;
 			File file = AppUtil.findFile(fileLocation);
 
 			if (file == null) {
+				logger.error("[WEBP] File not found: {}", fileLocation);
 				return Response.status(Status.NOT_FOUND).entity("File not found").build();
 			}
 
@@ -155,9 +158,11 @@ public class FileDownloadService {
 			String extension = name.substring(name.indexOf(".") + 1);
 			String thumbnailFolder = storageBasePath + File.separatorChar + BASE_FOLDERS.thumbnails.getFolder()
 					+ file.getParentFile().getAbsolutePath().substring(storageBasePath.length());
+			logger.info("[WEBP] thumbnailFolder: {}", thumbnailFolder);
 			String command = null;
 			command = AppUtil.generateCommand(file.getAbsolutePath(), thumbnailFolder, width, height,
 					preserve ? extension : format, null, fit);
+			logger.info("[WEBP] Generated ImageMagick command: {}", command);
 			File resizedFile = getResizedFile(command, thumbnailFolder, file);
 			Tika tika = new Tika();
 			String detactedContentType = tika.detect(resizedFile.getName());
@@ -176,13 +181,18 @@ public class FileDownloadService {
 
 	private File getResizedFile(String command, String thumbnailFolder, File file) {
 		File thumbnailFile = AppUtil.getResizedImage(command);
+		logger.info("[WEBP] Looking for thumbnail file: {}", thumbnailFile.getAbsolutePath());
 		File resizedFile;
 		if (!thumbnailFile.exists()) {
+			logger.info("[WEBP] Thumbnail doesn't exist, generating new file");
 			File folders = new File(thumbnailFolder);
 			folders.mkdirs();
 			boolean fileGenerated = AppUtil.generateFile(command);
+			logger.info("[WEBP] File generation result: {}", fileGenerated);
 			resizedFile = fileGenerated ? AppUtil.getResizedImage(command) : new File(file.toURI());
+			logger.info("[WEBP] Using resized file: {}", resizedFile.getAbsolutePath());
 		} else {
+			logger.info("[WEBP] Thumbnail exists, using cached file");
 			resizedFile = thumbnailFile;
 		}
 		return resizedFile;
