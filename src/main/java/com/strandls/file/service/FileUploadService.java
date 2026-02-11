@@ -230,7 +230,6 @@ public class FileUploadService {
 		boolean isFileCreated = writeToFile(is, file.getAbsolutePath());
 		MyUpload uploadModel = new MyUpload();
 		if (isFileCreated) {
-			logger.info("[UPLOAD] File created successfully: {}, size: {} bytes", file.getAbsolutePath(), file.length());
 			uploadModel.setFileName(file.getName());
 			uploadModel.setHashKey(hash);
 			uploadModel
@@ -238,9 +237,7 @@ public class FileUploadService {
 			uploadModel.setType(probeContentType);
 			BasicFileAttributes attributes;
 			if (probeContentType.startsWith(IMAGE)) {
-				logger.info("[UPLOAD] Processing image file: {}, contentType: {}", file.getName(), probeContentType);
 				String exifData = AppUtil.getExifData(file.getAbsolutePath());
-				logger.info("[UPLOAD] EXIF data extracted: {}", exifData);
 				String[] data = exifData.split("\\*");
 				if (exifData != null && !exifData.isEmpty() && exifData.contains("*")) {
 					int dataLength = data.length;

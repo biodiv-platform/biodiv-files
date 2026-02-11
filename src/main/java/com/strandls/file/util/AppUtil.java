@@ -329,7 +329,6 @@ public class AppUtil {
 		BufferedReader br = null;
 		try {
 			if (!PREVENTIVE_TOKENS.stream().filter(symbol -> command.contains(symbol)).findAny().isPresent()) {
-				logger.debug("[CMD] Executing: {}", command);
 				String[] commands = { "/bin/sh", "-c", command };
 				p = Runtime.getRuntime().exec(commands);
 				br = new BufferedReader(new InputStreamReader(p.getInputStream()));
@@ -337,14 +336,13 @@ public class AppUtil {
 				while ((line = br.readLine()) != null) {
 					output.append(line);
 				}
-				int exitCode = p.waitFor();
-				logger.debug("[CMD] Exit code: {}, Output: {}", exitCode, output.toString());
+				p.waitFor();
 			}
 		} catch (InterruptedException ie) {
-			logger.error("[CMD] InterruptedException: ", ie);
+			logger.error("InterruptedException: ", ie);
 			Thread.currentThread().interrupt();
 		} catch (Exception ex) {
-			logger.error("[CMD] Exception: {}", ex.getMessage());
+			logger.error(ex.getMessage());
 		}
 		return output.toString();
 	}
@@ -399,9 +397,6 @@ public class AppUtil {
 	public static String getExifData(String fileName) {
 		String command = "identify -format \"%[EXIF:GPSLatitude]*%[EXIF:GPSLongitude]*%[EXIF:DateTime]\" '" + fileName
 				+ "'";
-		logger.info("[EXIF] Executing command: {}", command);
-		String result = executeCommand(command);
-		logger.info("[EXIF] Command result: {}", result);
-		return result;
+		return executeCommand(command);
 	}
 }

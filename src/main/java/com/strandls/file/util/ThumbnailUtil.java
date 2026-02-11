@@ -39,33 +39,25 @@ public class ThumbnailUtil implements Runnable {
 
 	@Override
 	public void run() {
-		logger.info("[THUMBNAIL] Starting thumbnail generation for: {}", filePath);
 		try {
 			generateMultipleFiles(filePath, dirPath, filename, extension);
-			logger.info("[THUMBNAIL] Successfully generated thumbnails for: {}", filename);
 		} catch (IOException e) {
-			logger.error("[THUMBNAIL] Failed to generate thumbnails for: " + filePath, e);
+			logger.error(e.getMessage());
 		}
 	}
 
 	private static void generateMultipleFiles(String filePath, String dirPath, String filename, String extension)
 			throws IOException {
-		logger.info("[THUMBNAIL] Reading image file: {}", filePath);
 		File file = new File(filePath);
 
 		BufferedImage image = ImageIO.read(file);
 
 		// If unable to parse the image file
 		if (image == null) {
-			logger.error("[THUMBNAIL] Unable to read image file (ImageIO.read returned null): {}", filePath);
 			return;
 		}
 
-		logger.info("[THUMBNAIL] Image loaded successfully. Dimensions: {}x{}, Format: {}",
-					image.getWidth(), image.getHeight(), extension);
-
 		// Generate the gallery image.
-		logger.info("[THUMBNAIL] Generating gallery image ({}x{})", GALLERY_WIDTH, GALLERY_HEIGHT);
 		generateGallaryImage(image, dirPath, filename, extension);
 
 		// crop the image to square size
@@ -80,15 +72,12 @@ public class ThumbnailUtil implements Runnable {
 			y = (h - w) / 2;
 			h = w;
 		}
-		logger.info("[THUMBNAIL] Cropping image to square: {}x{} at position ({},{})", w, h, x, y);
 		BufferedImage cropedImage = image.getSubimage(x, y, w, h);
 
 		// Generate Thumb nail images
-		logger.info("[THUMBNAIL] Generating thumbnail variants");
 		generateGalleryThumbnailImage(cropedImage, dirPath, filename, extension);
 		generateThumbnail1Image(cropedImage, dirPath, filename, extension);
 		generateThumbnail2Image(cropedImage, dirPath, filename, extension);
-		logger.info("[THUMBNAIL] All thumbnail variants generated successfully");
 	}
 
 	private static void generateGallaryImage(BufferedImage image, String dirPath, String filename, String extension)
