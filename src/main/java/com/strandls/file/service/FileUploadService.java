@@ -107,7 +107,14 @@ public class FileUploadService {
 			fileUploadModel.setType(probeContentType);
 		}
 
-		String tempFileName = UUID.randomUUID().toString().replaceAll("-", "");
+		String tempFileName = "";
+
+		if (directory == BASE_FOLDERS.site) {
+			tempFileName = fileName;
+		} else {
+			tempFileName = UUID.randomUUID().toString().replaceAll("-", "");
+		}
+
 		String generatedFileName = tempFileName + "." + fileExtension;
 
 		String filePath = dirPath + File.separatorChar + generatedFileName;
