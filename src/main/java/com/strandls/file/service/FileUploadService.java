@@ -42,6 +42,9 @@ import com.strandls.file.model.comparator.UploadDateSort;
 import com.strandls.file.util.AppUtil;
 import com.strandls.file.util.AppUtil.BASE_FOLDERS;
 import com.strandls.file.util.AppUtil.MODULE;
+
+import net.minidev.json.JSONArray;
+
 import com.strandls.file.util.CompressedFileUploaderThread;
 import com.strandls.file.util.SheetUtil;
 import com.strandls.file.util.ThumbnailUtil;
@@ -83,12 +86,25 @@ public class FileUploadService {
 
 		String fileExtension = Files.getFileExtension(fileName);
 
+		// Check authentication first
+		CommonProfile profile = AuthUtil.getProfileFromRequest(request);
+		JSONArray roles = (JSONArray) profile.getAttribute("roles");
+		boolean isAdmin = roles.contains("ROLE_ADMIN");
+
+		// Only admin can upload to site directory
+		if (directory == BASE_FOLDERS.site && !isAdmin) {
+			fileUploadModel.setError("Only administrators can upload to site directory.");
+			return fileUploadModel;
+		}
+
 		String folderName = "";
 		if (nestedFolder != null && !nestedFolder.isEmpty()) {
 			folderName += String.join(String.valueOf(File.separatorChar), nestedFolder.split(",")) + File.separatorChar;
 		}
 
-		if (directory != BASE_FOLDERS.site) {
+		boolean isSiteDirectory = (directory == BASE_FOLDERS.site);
+
+		if (!isSiteDirectory) {
 			folderName += (hashKey == null || hashKey.isEmpty()) ? UUID.randomUUID().toString() : hashKey;
 		}
 
@@ -107,15 +123,8 @@ public class FileUploadService {
 			fileUploadModel.setType(probeContentType);
 		}
 
-		String tempFileName = "";
-
-		if (directory == BASE_FOLDERS.site) {
-			tempFileName = fileName;
-		} else {
-			tempFileName = UUID.randomUUID().toString().replaceAll("-", "");
-		}
-
-		String generatedFileName = tempFileName + "." + fileExtension;
+		String generatedFileName = isSiteDirectory ? fileName
+				: UUID.randomUUID().toString().replaceAll("-", "") + "." + fileExtension;
 
 		String filePath = dirPath + File.separatorChar + generatedFileName;
 		File file = new File(filePath);
@@ -127,14 +136,10 @@ public class FileUploadService {
 		fileUploadModel.setUploaded(uploaded);
 
 		if (probeContentType.startsWith(IMAGE)) {
-			Thread thread = new Thread(new ThumbnailUtil(filePath, dirPath, tempFileName, fileExtension));
+			String baseFileName = isSiteDirectory ? fileName.substring(0, fileName.lastIndexOf('.'))
+					: generatedFileName.substring(0, generatedFileName.lastIndexOf('.'));
+			Thread thread = new Thread(new ThumbnailUtil(filePath, dirPath, baseFileName, fileExtension));
 			thread.start();
-		}
-
-		if (folderName != null) {
-			folderName = folderName.replaceAll("[/\\\\]+", File.separator);
-			folderName = folderName.replaceAll("^" + File.separator + "+", "");
-			folderName = folderName.replaceAll(File.separator + "+$", "");
 		}
 
 		if (uploaded) {
@@ -142,11 +147,11 @@ public class FileUploadService {
 			fileUploadModel.setHashKey(folderName);
 			fileUploadModel.setFileName(generatedFileName);
 			fileUploadModel.setUri(resultPath);
-			return fileUploadModel;
 		} else {
 			fileUploadModel.setError("Unable to upload image");
-			return fileUploadModel;
 		}
+
+		return fileUploadModel;
 	}
 
 	private FileUploadModel uploadFile(String source, String directory, String hashKey, String fileName, MODULE module)
