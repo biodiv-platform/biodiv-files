@@ -121,8 +121,15 @@ public class FileUploadService {
 			fileUploadModel.setType(probeContentType);
 		}
 
-		String generatedFileName = isSiteDirectory ? fileName
-				: UUID.randomUUID().toString().replaceAll("-", "") + "." + fileExtension;
+		String generatedFileName;
+		if (isSiteDirectory) {
+			generatedFileName = fileName;
+		} else {
+			String actualExtension = fileExtension.isEmpty()
+					? probeContentType.substring(probeContentType.lastIndexOf('/') + 1)
+					: fileExtension;
+			generatedFileName = UUID.randomUUID().toString().replaceAll("-", "") + "." + actualExtension;
+		}
 
 		String filePath = dirPath + File.separatorChar + generatedFileName;
 		File file = new File(filePath);
@@ -133,14 +140,18 @@ public class FileUploadService {
 		fileUploadModel.setUploaded(uploaded);
 
 		if (probeContentType.startsWith(IMAGE)) {
-			String baseFileName = isSiteDirectory ? fileName.substring(0, fileName.lastIndexOf('.'))
-					: generatedFileName.substring(0, generatedFileName.lastIndexOf('.'));
-			Thread thread = new Thread(new ThumbnailUtil(filePath, dirPath, baseFileName, fileExtension));
+			String baseFileName;
+			if (isSiteDirectory) {
+				baseFileName = fileName;
+			} else {
+				baseFileName = generatedFileName.substring(0, generatedFileName.lastIndexOf('.'));
+			}
+			Thread thread = new Thread(new ThumbnailUtil(filePath, dirPath, baseFileName,
+					fileExtension.isEmpty() ? "png" : fileExtension)); // Default to png for thumbnails
 			thread.start();
 		}
 
 		if (folderName != null && !folderName.isEmpty()) {
-			// Replace multiple slashes with single separator and trim edges
 			folderName = folderName.replaceAll("[/\\\\]+", File.separator)
 					.replaceAll("^" + File.separator + "+|" + File.separator + "+$", "");
 		}
