@@ -87,7 +87,11 @@ public class FileUploadService {
 		if (nestedFolder != null && !nestedFolder.isEmpty()) {
 			folderName += String.join(String.valueOf(File.separatorChar), nestedFolder.split(",")) + File.separatorChar;
 		}
-		folderName += "".equals(hashKey) ? UUID.randomUUID().toString() : hashKey;
+
+		if (directory != BASE_FOLDERS.site) {
+			folderName += (hashKey == null || hashKey.isEmpty()) ? UUID.randomUUID().toString() : hashKey;
+		}
+
 		if (resourceFolder) {
 			folderName += File.separatorChar + "resources";
 		}
