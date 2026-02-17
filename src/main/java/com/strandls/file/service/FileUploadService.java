@@ -120,6 +120,12 @@ public class FileUploadService {
 			thread.start();
 		}
 
+		if (folderName != null) {
+			folderName = folderName.replaceAll("[/\\\\]+", File.separator);
+			folderName = folderName.replaceAll("^" + File.separator + "+", "");
+			folderName = folderName.replaceAll(File.separator + "+$", "");
+		}
+
 		if (uploaded) {
 			String resultPath = File.separatorChar + folderName + File.separatorChar + generatedFileName;
 			fileUploadModel.setHashKey(folderName);
