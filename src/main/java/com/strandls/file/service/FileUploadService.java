@@ -86,12 +86,10 @@ public class FileUploadService {
 
 		String fileExtension = Files.getFileExtension(fileName);
 
-		// Check authentication first
 		CommonProfile profile = AuthUtil.getProfileFromRequest(request);
 		JSONArray roles = (JSONArray) profile.getAttribute("roles");
 		boolean isAdmin = roles.contains("ROLE_ADMIN");
 
-		// Only admin can upload to site directory
 		if (directory == BASE_FOLDERS.site && !isAdmin) {
 			fileUploadModel.setError("Only administrators can upload to site directory.");
 			return fileUploadModel;
@@ -132,7 +130,6 @@ public class FileUploadService {
 			throw new IOException("Invalid folder");
 		}
 		boolean uploaded = writeToFile(inputStream, filePath);
-
 		fileUploadModel.setUploaded(uploaded);
 
 		if (probeContentType.startsWith(IMAGE)) {
@@ -142,8 +139,17 @@ public class FileUploadService {
 			thread.start();
 		}
 
+		if (folderName != null && !folderName.isEmpty()) {
+			// Replace multiple slashes with single separator and trim edges
+			folderName = folderName.replaceAll("[/\\\\]+", File.separator)
+					.replaceAll("^" + File.separator + "+|" + File.separator + "+$", "");
+		}
+
 		if (uploaded) {
-			String resultPath = File.separatorChar + folderName + File.separatorChar + generatedFileName;
+			String resultPath = (folderName.isEmpty() ? "" : File.separatorChar + folderName) + File.separatorChar
+					+ generatedFileName;
+			resultPath = resultPath.replace("//", "/");
+
 			fileUploadModel.setHashKey(folderName);
 			fileUploadModel.setFileName(generatedFileName);
 			fileUploadModel.setUri(resultPath);
