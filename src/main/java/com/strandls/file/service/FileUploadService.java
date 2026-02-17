@@ -35,8 +35,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.io.Files;
 import com.strandls.authentication_utility.util.AuthUtil;
-import com.strandls.file.dao.FileAccessDao;
-import com.strandls.file.model.FileDownloads;
 import com.strandls.file.model.FileUploadModel;
 import com.strandls.file.model.MobileFileUpload;
 import com.strandls.file.model.MyUpload;
@@ -54,9 +52,6 @@ public class FileUploadService {
 
 	@Inject
 	private UploadedMetaDataService uploadedMetaDataService;
-
-	@Inject
-	private FileAccessDao fileAccessDao;
 
 	String storageBasePath = null;
 	SimpleDateFormat sdf;
@@ -92,7 +87,12 @@ public class FileUploadService {
 		if (nestedFolder != null && !nestedFolder.isEmpty()) {
 			folderName += String.join(String.valueOf(File.separatorChar), nestedFolder.split(",")) + File.separatorChar;
 		}
-		folderName += "".equals(hashKey) ? UUID.randomUUID().toString() : hashKey;
+
+		if (directory == BASE_FOLDERS.site) {
+		} else {
+			folderName += (hashKey == null || "".equals(hashKey)) ? UUID.randomUUID().toString() : hashKey;
+		}
+
 		if (resourceFolder) {
 			folderName += File.separatorChar + "resources";
 		}
@@ -108,20 +108,36 @@ public class FileUploadService {
 			fileUploadModel.setType(probeContentType);
 		}
 
-		String tempFileName = UUID.randomUUID().toString().replaceAll("-", "");
-		String generatedFileName = tempFileName + "." + fileExtension;
+		String generatedFileName;
+
+		if (directory == BASE_FOLDERS.site) {
+			generatedFileName = fileName;
+		} else {
+			String tempFileName = UUID.randomUUID().toString().replaceAll("-", "");
+			generatedFileName = tempFileName + "." + fileExtension;
+		}
 
 		String filePath = dirPath + File.separatorChar + generatedFileName;
 		File file = new File(filePath);
 		if (!file.getCanonicalPath().startsWith(storageBasePath)) {
 			throw new IOException("Invalid folder");
 		}
+
+		file.getParentFile().mkdirs();
+
+		if (directory == BASE_FOLDERS.site && file.exists()) {
+			file.delete();
+		}
+
 		boolean uploaded = writeToFile(inputStream, filePath);
 
 		fileUploadModel.setUploaded(uploaded);
 
 		if (probeContentType.startsWith(IMAGE)) {
-			Thread thread = new Thread(new ThumbnailUtil(filePath, dirPath, tempFileName, fileExtension));
+			String thumbName = directory == BASE_FOLDERS.site ? fileName
+					: generatedFileName.replace("." + fileExtension, "");
+
+			Thread thread = new Thread(new ThumbnailUtil(filePath, dirPath, thumbName, fileExtension));
 			thread.start();
 		}
 
