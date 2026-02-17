@@ -87,12 +87,7 @@ public class FileUploadService {
 		if (nestedFolder != null && !nestedFolder.isEmpty()) {
 			folderName += String.join(String.valueOf(File.separatorChar), nestedFolder.split(",")) + File.separatorChar;
 		}
-
-		if (directory == BASE_FOLDERS.site) {
-		} else {
-			folderName += (hashKey == null || "".equals(hashKey)) ? UUID.randomUUID().toString() : hashKey;
-		}
-
+		folderName += "".equals(hashKey) ? UUID.randomUUID().toString() : hashKey;
 		if (resourceFolder) {
 			folderName += File.separatorChar + "resources";
 		}
@@ -108,36 +103,20 @@ public class FileUploadService {
 			fileUploadModel.setType(probeContentType);
 		}
 
-		String generatedFileName;
-
-		if (directory == BASE_FOLDERS.site) {
-			generatedFileName = fileName;
-		} else {
-			String tempFileName = UUID.randomUUID().toString().replaceAll("-", "");
-			generatedFileName = tempFileName + "." + fileExtension;
-		}
+		String tempFileName = UUID.randomUUID().toString().replaceAll("-", "");
+		String generatedFileName = tempFileName + "." + fileExtension;
 
 		String filePath = dirPath + File.separatorChar + generatedFileName;
 		File file = new File(filePath);
 		if (!file.getCanonicalPath().startsWith(storageBasePath)) {
 			throw new IOException("Invalid folder");
 		}
-
-		file.getParentFile().mkdirs();
-
-		if (directory == BASE_FOLDERS.site && file.exists()) {
-			file.delete();
-		}
-
 		boolean uploaded = writeToFile(inputStream, filePath);
 
 		fileUploadModel.setUploaded(uploaded);
 
 		if (probeContentType.startsWith(IMAGE)) {
-			String thumbName = directory == BASE_FOLDERS.site ? fileName
-					: generatedFileName.replace("." + fileExtension, "");
-
-			Thread thread = new Thread(new ThumbnailUtil(filePath, dirPath, thumbName, fileExtension));
+			Thread thread = new Thread(new ThumbnailUtil(filePath, dirPath, tempFileName, fileExtension));
 			thread.start();
 		}
 
