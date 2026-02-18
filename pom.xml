@@ -16,7 +16,7 @@
 
 
 		<postgresql.version>42.3.3</postgresql.version>
-		<hibernate-core.version>5.4.1.Final</hibernate-core.version>
+		<hibernate-core.version>5.4.24.Final</hibernate-core.version>
 
 
 		<swagger-ui.version>3.17.0</swagger-ui.version>
