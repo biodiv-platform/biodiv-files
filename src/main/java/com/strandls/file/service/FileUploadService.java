@@ -136,6 +136,16 @@ public class FileUploadService {
 		if (!file.getCanonicalPath().startsWith(storageBasePath)) {
 			throw new IOException("Invalid folder");
 		}
+
+		// Delete existing file if it exists (for site directory uploads)
+		if (isSiteDirectory && file.exists()) {
+			boolean deleted = file.delete();
+			if (!deleted) {
+				fileUploadModel.setError("Unable to delete existing file before upload");
+				return fileUploadModel;
+			}
+		}
+
 		boolean uploaded = writeToFile(inputStream, filePath);
 		fileUploadModel.setUploaded(uploaded);
 
