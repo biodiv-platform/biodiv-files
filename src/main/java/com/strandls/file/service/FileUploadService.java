@@ -137,12 +137,82 @@ public class FileUploadService {
 			throw new IOException("Invalid folder");
 		}
 
-		// Delete existing file if it exists (for site directory uploads)
-		if (isSiteDirectory && file.exists()) {
-			boolean deleted = file.delete();
-			if (!deleted) {
-				fileUploadModel.setError("Unable to delete existing file before upload");
-				return fileUploadModel;
+		// For site directory uploads, delete existing file if it exists
+		if (isSiteDirectory) {
+			// Check if file exists
+			if (file.exists()) {
+				System.out.println("File exists: " + file.getAbsolutePath());
+				System.out.println("File can read: " + file.canRead());
+				System.out.println("File can write: " + file.canWrite());
+				System.out.println("File is file: " + file.isFile());
+				System.out.println("File parent directory: " + file.getParent());
+				System.out.println("Parent directory exists: " + file.getParentFile().exists());
+				System.out.println("Parent directory can write: " + file.getParentFile().canWrite());
+
+				// Check if file is locked by another process
+				try {
+					java.nio.channels.FileChannel channel = java.nio.channels.FileChannel.open(file.toPath(),
+							java.nio.file.StandardOpenOption.READ, java.nio.file.StandardOpenOption.WRITE);
+					channel.close();
+					System.out.println("File is not locked");
+				} catch (Exception e) {
+					System.out.println("File is locked: " + e.getMessage());
+				}
+
+				// Try to delete with multiple approaches
+				boolean deleted = false;
+
+				// Approach 1: Simple delete
+				deleted = file.delete();
+				System.out.println("Simple delete result: " + deleted);
+
+				// Approach 2: Delete on exit (for testing)
+				if (!deleted) {
+					file.deleteOnExit();
+					System.out.println("Marked for deletion on exit");
+				}
+
+				// Approach 3: Try to force delete using Java NIO
+				if (!deleted) {
+					try {
+						deleted = java.nio.file.Files.deleteIfExists(file.toPath());
+						System.out.println("NIO delete result: " + deleted);
+					} catch (Exception e) {
+						System.out.println("NIO delete error: " + e.getMessage());
+					}
+				}
+
+				// Approach 4: Try system command
+				if (!deleted) {
+					try {
+						Process process = Runtime.getRuntime().exec("rm -f " + file.getAbsolutePath());
+						int exitCode = process.waitFor();
+						deleted = (exitCode == 0);
+						System.out
+								.println("System command delete result: " + deleted + " (exit code: " + exitCode + ")");
+					} catch (Exception e) {
+						System.out.println("System command error: " + e.getMessage());
+					}
+				}
+
+				if (!deleted) {
+					fileUploadModel
+							.setError("Unable to delete existing file. Check permissions and if file is in use.");
+					return fileUploadModel;
+				} else {
+					System.out.println("File successfully deleted");
+				}
+			} else {
+				System.out.println("File does not exist: " + file.getAbsolutePath());
+			}
+
+			// Ensure parent directories exist for new file
+			File parentDir = file.getParentFile();
+			if (!parentDir.exists()) {
+				if (!parentDir.mkdirs()) {
+					fileUploadModel.setError("Unable to create directory: " + parentDir.getPath());
+					return fileUploadModel;
+				}
 			}
 		}
 
@@ -152,12 +222,12 @@ public class FileUploadService {
 		if (probeContentType.startsWith(IMAGE)) {
 			String baseFileName;
 			if (isSiteDirectory) {
-				baseFileName = fileName;
+				baseFileName = fileName.substring(0, fileName.lastIndexOf('.'));
 			} else {
 				baseFileName = generatedFileName.substring(0, generatedFileName.lastIndexOf('.'));
 			}
 			Thread thread = new Thread(new ThumbnailUtil(filePath, dirPath, baseFileName,
-					fileExtension.isEmpty() ? "png" : fileExtension)); // Default to png for thumbnails
+					fileExtension.isEmpty() ? "png" : fileExtension));
 			thread.start();
 		}
 
