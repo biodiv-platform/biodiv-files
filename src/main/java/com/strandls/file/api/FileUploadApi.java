@@ -5,6 +5,29 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.strandls.authentication_utility.filter.ValidateUser;
+import com.strandls.authentication_utility.util.AuthUtil;
+import com.strandls.file.dto.FilesDTO;
+import com.strandls.file.model.FileDownloadCredentials;
+import com.strandls.file.model.FileDownloads;
+import com.strandls.file.model.FileUploadModel;
+import com.strandls.file.model.MobileFileUpload;
+import com.strandls.file.model.MyUpload;
+import com.strandls.file.service.FileAccessService;
+import com.strandls.file.service.FileUploadService;
+import com.strandls.file.util.AppUtil;
+import com.strandls.file.util.AppUtil.BASE_FOLDERS;
+import com.strandls.file.util.AppUtil.MODULE;
+
+import net.minidev.json.JSONArray;
+
+import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -14,18 +37,10 @@ import org.pac4j.core.profile.CommonProfile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.strandls.authentication_utility.filter.ValidateUser;
-import com.strandls.authentication_utility.util.AuthUtil;
 import com.strandls.file.ApiConstants;
-import com.strandls.file.dto.FilesDTO;
 import com.strandls.file.dto.StringObjectMap;
-import com.strandls.file.model.FileUploadModel;
-import com.strandls.file.model.MobileFileUpload;
-import com.strandls.file.model.MyUpload;
-import com.strandls.file.service.FileUploadService;
-import com.strandls.file.util.AppUtil;
-import com.strandls.file.util.AppUtil.BASE_FOLDERS;
-import com.strandls.file.util.AppUtil.MODULE;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -35,8 +50,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.inject.Inject;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
@@ -44,9 +57,6 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 
 @Path(ApiConstants.UPLOAD)
 @Tag(name = "Upload", description = "Operations related to file uploads")
@@ -54,8 +64,13 @@ public class FileUploadApi {
 
 	private static final Logger logger = LoggerFactory.getLogger(FileUploadApi.class);
 
+	private static final AtomicBoolean DWC_EXPORT_IN_PROGRESS = new AtomicBoolean(false);
+
 	@Inject
 	private FileUploadService fileUploadService;
+
+	@Inject
+	private FileAccessService accessService;
 
 	@POST
 	@Path(ApiConstants.MY_UPLOADS + ApiConstants.MOBILE)
@@ -144,27 +159,66 @@ public class FileUploadApi {
 
 	@GET
 	@Path(ApiConstants.DWCFILE)
+	@ValidateUser
 	@Produces(MediaType.TEXT_PLAIN)
-	@Operation(summary = "Mapping of Document", description = "Returns Document")
-	@ApiResponses({ @ApiResponse(responseCode = "200", description = "File Created Successfully"),
-			@ApiResponse(responseCode = "400", description = "File Created Failed"),
-			@ApiResponse(responseCode = "500", description = "Internal Server Error") })
-	public Response createDwcFILE() {
+	@Operation(summary = "Create DWC file", description = "Generates a Darwin Core Archive file for biodiversity data export")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "File creation successful"),
+			@ApiResponse(responseCode = "500", description = "Internal server error") })
+	public Response createDwcFILE(@Context HttpServletRequest request) {
+
+		CommonProfile profile = AuthUtil.getProfileFromRequest(request);
+
+		JSONArray roles = (JSONArray) profile.getAttribute("roles");
+		if (!roles.contains("ROLE_ADMIN")) {
+			return Response.status(Status.UNAUTHORIZED).build();
+
+		}
+		// 🔒 Prevent concurrent exports
+		if (!DWC_EXPORT_IN_PROGRESS.compareAndSet(false, true)) {
+			return Response.status(Status.CONFLICT).entity("export already in progress").build();
+		}
+		FileDownloadCredentials credentials = accessService.getCredentialsById(1);
+
+		FileDownloads download = null;
+
+		if (credentials != null) {
+			download = accessService.createDownload(credentials);
+		}
+
 		String filePath = "/app/configurations/scripts/";
 		String csvFilePath = "/app/data/biodiv/data-archive/gbif/" + AppUtil.getDatePrefix() + "dWC.csv";
 		String script = "gbif_dwc.sh";
+
 		try {
 			Process process = Runtime.getRuntime().exec("sh " + script + " " + csvFilePath, null, new File(filePath));
+
 			int exitCode = process.waitFor();
-			if (exitCode == 0)
-				return Response.ok("File Creation Successful!").build();
+
+			if (exitCode == 0) {
+				String createdFileName = new File(csvFilePath).getName();
+				if (download != null) {
+					accessService.saveDwcFile(createdFileName, download);
+				}
+				return Response.status(Status.OK).entity("File Creation Successful!").build();
+
+			}
+
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity("File Creation Failed").build();
+
 		} catch (InterruptedException ie) {
 			logger.error("InterruptedException: ", ie);
 			Thread.currentThread().interrupt();
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity("Export interrupted").build();
+
 		} catch (Exception e) {
-			return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+			logger.error("Export failed", e);
+			return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
+
+		} finally {
+			// 🔓 Always release lock
+			DWC_EXPORT_IN_PROGRESS.set(false);
 		}
-		return Response.status(Response.Status.BAD_REQUEST).entity("File Creation Failed").build();
 	}
 
 	@POST

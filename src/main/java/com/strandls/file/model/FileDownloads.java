@@ -53,6 +53,16 @@ public class FileDownloads implements Serializable {
 	@ManyToOne(optional = false)
 	private FileDownloadCredentials userId;
 
+	@Column(name = "created_date")
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date createdDate;
+
+	@Column(name = "status")
+	private String status = "READY";
+
+	@Column(name = "is_deleted", columnDefinition = "boolean default false")
+	private Boolean isDeleted;
+
 	public FileDownloads() {
 	}
 
@@ -96,6 +106,30 @@ public class FileDownloads implements Serializable {
 
 	public void setFileName(String fileName) {
 		this.fileName = fileName;
+	}
+
+	public Boolean getIsDeleted() {
+		return isDeleted;
+	}
+
+	public void setIsDeleted(Boolean isDeleted) {
+		this.isDeleted = isDeleted;
+	}
+
+	public Date getCreatedDate() {
+		return createdDate;
+	}
+
+	public void setCreatedDate(Date createdDate) {
+		this.createdDate = createdDate;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
 	}
 
 	@Override
