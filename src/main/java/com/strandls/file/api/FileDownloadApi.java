@@ -91,7 +91,7 @@ public class FileDownloadApi {
 
 		String accept = request.getHeader(HttpHeaders.ACCEPT);
 		boolean preserveFormat = Boolean.parseBoolean(preserve);
-		String userRequestedFormat = accept.contains("webp") && format.equalsIgnoreCase("webp") ? "webp"
+		String userRequestedFormat = (accept != null && accept.contains("webp") && format.equalsIgnoreCase("webp")) ? "webp"
 				: (!format.equalsIgnoreCase("webp") ? format : "jpg");
 
 		return fileDownloadService.getImage(request, directory, fileName, width, height, userRequestedFormat, fit,
