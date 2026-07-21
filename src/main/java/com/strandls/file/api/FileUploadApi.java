@@ -190,9 +190,7 @@ public class FileUploadApi {
 		String script = "gbif_dwc.sh";
 
 		try {
-			ProcessBuilder processBuilder = new ProcessBuilder("sh", script, csvFilePath);
-			processBuilder.directory(new File(filePath));
-			Process process = processBuilder.start();
+			Process process = Runtime.getRuntime().exec("sh " + script + " " + csvFilePath, null, new File(filePath));
 
 			int exitCode = process.waitFor();
 
