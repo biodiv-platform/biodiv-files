@@ -23,7 +23,6 @@ import net.minidev.json.JSONArray;
 
 import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -191,7 +190,9 @@ public class FileUploadApi {
 		String script = "gbif_dwc.sh";
 
 		try {
-			Process process = Runtime.getRuntime().exec("sh " + script + " " + csvFilePath, null, new File(filePath));
+			ProcessBuilder processBuilder = new ProcessBuilder("sh", script, csvFilePath);
+			processBuilder.directory(new File(filePath));
+			Process process = processBuilder.start();
 
 			int exitCode = process.waitFor();
 

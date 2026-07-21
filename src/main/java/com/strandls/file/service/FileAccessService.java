@@ -224,8 +224,9 @@ public class FileAccessService {
 	public FileDownloads createDownload(FileDownloadCredentials credentials) {
 		FileDownloads download = new FileDownloads();
 		try {
-
-			download.setCreatedDate(new Date());
+			Date now = new Date();
+			download.setDate(now);
+			download.setCreatedDate(now);
 			download.setFileName("EXPORTING...");
 			download.setIsDeleted(false);
 			download.setStatus("IN_PROGRESS");
