@@ -8,6 +8,8 @@ package com.strandls.file.model;
 import java.io.Serializable;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Basic;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -53,6 +55,7 @@ public class FileDownloadCredentials implements Serializable {
 	private Boolean isDeleted;
 
 	@OneToMany(cascade = CascadeType.ALL, mappedBy = "userId")
+	@JsonIgnore
 	private List<FileDownloads> fileDownloadsList;
 
 	public FileDownloadCredentials() {
