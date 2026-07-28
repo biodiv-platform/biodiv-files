@@ -35,6 +35,8 @@ import com.strandls.file.scheduler.QuartzJob;
 import com.strandls.file.scheduler.QuartzJobFactory;
 import com.strandls.file.scheduler.QuartzScheduler;
 import com.strandls.file.service.ServiceModule;
+import com.strandls.file.util.TusConfig;
+import com.strandls.file.util.TusResultStore;
 
 import jakarta.servlet.ServletContextEvent;
 
@@ -70,6 +72,9 @@ public class FileServeletContextListener extends GuiceServletContextListener {
 
 				bind(SessionFactory.class).toInstance(sessionFactory);
 				bind(QuartzJob.class).in(Scopes.SINGLETON);
+
+				bind(TusConfig.class).in(Scopes.SINGLETON);
+				bind(TusResultStore.class).in(Scopes.SINGLETON);
 
 				RabbitMqConnection connection = new RabbitMqConnection();
 				Channel channel = null;
