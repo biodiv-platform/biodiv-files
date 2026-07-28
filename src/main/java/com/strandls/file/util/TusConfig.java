@@ -9,9 +9,8 @@ public class TusConfig {
 	private final TusFileUploadService tusFileUploadService;
 
 	public TusConfig() {
-		this.tusFileUploadService = new TusFileUploadService().withStoragePath("/home/apps/biodiv-image/tus-tmp")
+		this.tusFileUploadService = new TusFileUploadService().withStoragePath("/app/data/biodiv/tus-tmp")
 				.withMaxUploadSize(2L * 1024 * 1024 * 1024).withUploadExpirationPeriod(24 * 60 * 60 * 1000L);
-
 	}
 
 	public TusFileUploadService getService() {
