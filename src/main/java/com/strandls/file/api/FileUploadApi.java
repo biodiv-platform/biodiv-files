@@ -65,6 +65,7 @@ import com.strandls.file.util.TusResultStore;
 
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.HEAD;
+import jakarta.ws.rs.OPTIONS;
 import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.PathParam;
 
@@ -456,7 +457,14 @@ public class FileUploadApi {
 		processTusRequest(request, response);
 	}
 
+	@OPTIONS
+	@Path(ApiConstants.TUS + "/{id}")
+	public Response optionsTusUpload() {
+		return Response.ok().build();
+	}
+
 	@PATCH
+	@POST
 	@Path(ApiConstants.TUS + "/{id}")
 	@ValidateUser
 	@Operation(summary = "Append tus upload chunk")
