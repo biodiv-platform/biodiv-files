@@ -457,21 +457,30 @@ public class FileUploadApi {
 		processTusRequest(request, response);
 	}
 
-	@OPTIONS
-	@Path(ApiConstants.TUS + "/{id}")
-	public Response optionsTusUpload() {
-		return Response.ok().build();
-	}
-
 	@PATCH
-	@POST
 	@Path(ApiConstants.TUS + "/{id}")
 	@ValidateUser
-	@Operation(summary = "Append tus upload chunk")
+	@Operation(summary = "Append tus upload chunk via PATCH")
 	@ApiResponses({ @ApiResponse(responseCode = "204", description = "Chunk accepted") })
 	public void patchTusUpload(@Context HttpServletRequest request, @Context HttpServletResponse response,
 			@PathParam("id") String id) throws IOException {
 		processTusRequest(request, response);
+	}
+
+	@POST
+	@Path(ApiConstants.TUS + "/{id}")
+	@ValidateUser
+	@Operation(summary = "Append tus upload chunk via POST method override")
+	@ApiResponses({ @ApiResponse(responseCode = "204", description = "Chunk accepted") })
+	public void postTusUploadChunk(@Context HttpServletRequest request, @Context HttpServletResponse response,
+			@PathParam("id") String id) throws IOException {
+		processTusRequest(request, response);
+	}
+
+	@OPTIONS
+	@Path(ApiConstants.TUS + "/{id}")
+	public Response optionsTusUpload() {
+		return Response.ok().build();
 	}
 
 	@HEAD
