@@ -24,4 +24,6 @@ public class ApiConstants {
 	public static final String FILES_PATH = "/files-path";
 	public static final String ICON = "/icon";
 	public static final String MOBILE = "/mobile";
+	public static final String TUS = "/tus";
+	public static final String RESULT = "/result";
 }

@@ -1,6 +1,7 @@
 package com.strandls.file.api;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
@@ -56,6 +57,20 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import com.strandls.file.util.TusConfig;
+import com.strandls.file.util.TusResultStore;
+
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.ws.rs.HEAD;
+import jakarta.ws.rs.OPTIONS;
+import jakarta.ws.rs.PATCH;
+import jakarta.ws.rs.PathParam;
+
+import me.desair.tus.server.exception.TusException;
+import me.desair.tus.server.upload.UploadInfo;
 
 @Path(ApiConstants.UPLOAD)
 @Tag(name = "Upload", description = "Operations related to file uploads")
@@ -65,11 +80,20 @@ public class FileUploadApi {
 
 	private static final AtomicBoolean DWC_EXPORT_IN_PROGRESS = new AtomicBoolean(false);
 
+	private final ExecutorService tusFinalizerPool = Executors.newFixedThreadPool(4);
+	private volatile boolean tusUploadUriConfigured = false;
+
 	@Inject
 	private FileUploadService fileUploadService;
 
 	@Inject
 	private FileAccessService accessService;
+
+	@Inject
+	private TusConfig tusConfig;
+
+	@Inject
+	private TusResultStore resultStore;
 
 	@POST
 	@Path(ApiConstants.MY_UPLOADS + ApiConstants.MOBILE)
@@ -161,8 +185,7 @@ public class FileUploadApi {
 	@ValidateUser
 	@Produces(MediaType.TEXT_PLAIN)
 	@Operation(summary = "Create DWC file", description = "Generates a Darwin Core Archive file for biodiversity data export")
-	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "File creation successful"),
+	@ApiResponses({ @ApiResponse(responseCode = "200", description = "File creation successful"),
 			@ApiResponse(responseCode = "500", description = "Internal server error") })
 	public Response createDwcFILE(@Context HttpServletRequest request) {
 
@@ -420,6 +443,147 @@ public class FileUploadApi {
 			return Response.ok("File extraction in progress from " + folder).build();
 		} catch (Exception ex) {
 			return Response.status(Response.Status.BAD_REQUEST).entity(ex.getMessage()).build();
+		}
+	}
+
+	@POST
+	@Path(ApiConstants.TUS)
+	@ValidateUser
+	@Operation(summary = "Create/append tus upload", description = "Handles tus protocol POST (create) and PATCH (chunk) requests for large file uploads")
+	@ApiResponses({ @ApiResponse(responseCode = "201", description = "Upload created"),
+			@ApiResponse(responseCode = "204", description = "Chunk accepted") })
+	public void createTusUpload(@Context HttpServletRequest request, @Context HttpServletResponse response)
+			throws IOException {
+		processTusRequest(request, response);
+	}
+
+	@PATCH
+	@Path(ApiConstants.TUS + "/{id}")
+	@ValidateUser
+	@Operation(summary = "Append tus upload chunk via PATCH")
+	@ApiResponses({ @ApiResponse(responseCode = "204", description = "Chunk accepted") })
+	public void patchTusUpload(@Context HttpServletRequest request, @Context HttpServletResponse response,
+			@PathParam("id") String id) throws IOException {
+		processTusRequest(request, response);
+	}
+
+	@POST
+	@Path(ApiConstants.TUS + "/{id}")
+	@ValidateUser
+	@Operation(summary = "Append tus upload chunk via POST method override")
+	@ApiResponses({ @ApiResponse(responseCode = "204", description = "Chunk accepted") })
+	public void postTusUploadChunk(@Context HttpServletRequest request, @Context HttpServletResponse response,
+			@PathParam("id") String id) throws IOException {
+		processTusRequest(request, response);
+	}
+
+	@OPTIONS
+	@Path(ApiConstants.TUS + "/{id}")
+	public Response optionsTusUpload() {
+		return Response.ok().build();
+	}
+
+	@HEAD
+	@Path(ApiConstants.TUS + "/{id}")
+	@ValidateUser
+	@Operation(summary = "Check tus upload offset (resume support)")
+	@ApiResponses({ @ApiResponse(responseCode = "200", description = "Current upload offset returned in headers") })
+	public void headTusUpload(@Context HttpServletRequest request, @Context HttpServletResponse response,
+			@PathParam("id") String id) throws IOException {
+		processTusRequest(request, response);
+	}
+
+	@GET
+	@Path(ApiConstants.TUS + "/{id}" + ApiConstants.RESULT)
+	@ValidateUser
+	@Produces(MediaType.APPLICATION_JSON)
+	@Operation(summary = "Poll tus upload result", description = "Returns whether server-side finalization (save/zip-extract) has completed, and its result")
+	@ApiResponses({ @ApiResponse(responseCode = "200", description = "Status/result of the upload"),
+			@ApiResponse(responseCode = "400", description = "Invalid upload id"),
+			@ApiResponse(responseCode = "404", description = "Unknown or expired upload") })
+	public Response getTusResult(@Context HttpServletRequest request, @PathParam("id") String id) {
+		if (id == null || id.isBlank() || id.contains("..")) {
+			return Response.status(Response.Status.BAD_REQUEST).entity("Invalid upload id").build();
+		}
+
+		String requestUri = request.getRequestURI();
+		String uploadUri = requestUri.substring(0, requestUri.length() - ApiConstants.RESULT.length());
+
+		TusResultStore.Entry entry = resultStore.get(uploadUri);
+		if (entry == null) {
+			return Response.status(Response.Status.NOT_FOUND).build();
+		}
+
+		Map<String, Object> body = new HashMap<>();
+		body.put("complete", entry.complete);
+		if (entry.complete) {
+			body.put("result", entry.error != null ? Map.of("error", entry.error) : entry.result);
+			resultStore.remove(uploadUri);
+		}
+		return Response.ok(body).build();
+	}
+
+	private void processTusRequest(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		if (!tusUploadUriConfigured) {
+			synchronized (this) {
+				if (!tusUploadUriConfigured) {
+					String contextAwareUri = request.getContextPath() + "/api/" + ApiConstants.UPLOAD
+							+ ApiConstants.TUS;
+					tusConfig.getService().withUploadUri(contextAwareUri);
+					logger.info("Configured tus upload URI as: {}", contextAwareUri);
+					tusUploadUriConfigured = true;
+				}
+			}
+		}
+
+		CommonProfile profile;
+		try {
+			profile = AuthUtil.getProfileFromRequest(request);
+		} catch (Exception e) {
+			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			return;
+		}
+		String ownerKey = profile.getId();
+		String uploadUri = request.getRequestURI();
+
+		try {
+			tusConfig.getService().process(request, response, ownerKey);
+
+			UploadInfo info = tusConfig.getService().getUploadInfo(uploadUri, ownerKey);
+			if (info != null && info.getOffset().equals(info.getLength())) {
+				tusFinalizerPool.submit(() -> finalizeTusUpload(uploadUri, ownerKey, info));
+			}
+		} catch (TusException | IOException e) {
+			logger.error("tus process error", e);
+			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	private void finalizeTusUpload(String uploadUri, String ownerKey, UploadInfo info) {
+		TusResultStore.Entry entry = resultStore.getOrCreate(uploadUri);
+		try (InputStream uploadedBytes = tusConfig.getService().getUploadedBytes(uploadUri, ownerKey)) {
+
+			String fileName = info.getMetadata().get("filename");
+			String moduleStr = info.getMetadata().get("module");
+			MODULE module = AppUtil.getModule(moduleStr);
+			if (module == null) {
+				throw new IllegalArgumentException("Invalid module: " + moduleStr);
+			}
+			Long userId = Long.parseLong(ownerKey);
+
+			entry.result = fileUploadService.finalizeTusUpload(uploadedBytes, fileName, module, userId);
+			entry.complete = true;
+
+		} catch (Exception e) {
+			logger.error("tus finalize error", e);
+			entry.error = e.getMessage();
+			entry.complete = true;
+		} finally {
+			try {
+				tusConfig.getService().deleteUpload(uploadUri, ownerKey);
+			} catch (TusException | IOException e) {
+				logger.error("Failed to clean up tus upload for uri: {}", uploadUri, e);
+			}
 		}
 	}
 }

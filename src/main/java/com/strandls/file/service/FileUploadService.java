@@ -752,4 +752,32 @@ public class FileUploadService {
 		return finalPaths;
 	}
 
+	public List<MyUpload> finalizeTusUpload(InputStream uploadedBytes, String fileName, MODULE module, Long userId)
+			throws Exception {
+		List<MyUpload> savedFiles = new ArrayList<>();
+		Tika tika = new Tika();
+		String contentType = tika.detect(fileName);
+
+		if (contentType.endsWith("zip") || fileName.toLowerCase().endsWith(".zip")) {
+			String hash = String.join("", "ibpmu-", UUID.randomUUID().toString());
+			String tempPath = storageBasePath + File.separatorChar + BASE_FOLDERS.temp + File.separatorChar + userId;
+			String myUploadsPath = storageBasePath + File.separatorChar + BASE_FOLDERS.myUploads.getFolder()
+					+ File.separatorChar + userId;
+			String zipPath = tempPath + File.separatorChar + hash + File.separatorChar + fileName;
+
+			boolean written = writeToFile(uploadedBytes, zipPath);
+			if (written) {
+				File zipFile = new File(zipPath);
+				savedFiles.addAll(AppUtil.parseZipFiles(myUploadsPath, zipFile.getCanonicalPath(), module));
+				zipFile.delete();
+				zipFile.getParentFile().delete();
+			}
+		} else {
+			String hash = String.join("", "ibpmu-", UUID.randomUUID().toString());
+			savedFiles.add(saveFile(uploadedBytes, module, fileName, hash, userId));
+		}
+
+		return savedFiles;
+	}
+
 }
