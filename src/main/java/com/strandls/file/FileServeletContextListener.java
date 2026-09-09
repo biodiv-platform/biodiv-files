@@ -28,7 +28,8 @@ import com.google.inject.Injector;
 import com.google.inject.Scopes;
 import com.google.inject.servlet.GuiceServletContextListener;
 import com.google.inject.servlet.ServletModule;
-import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.Connection;
 import com.strandls.file.api.APIModule;
 import com.strandls.file.dao.DaoModule;
 import com.strandls.file.scheduler.QuartzJob;
@@ -76,14 +77,19 @@ public class FileServeletContextListener extends GuiceServletContextListener {
 				bind(TusConfig.class).in(Scopes.SINGLETON);
 				bind(TusResultStore.class).in(Scopes.SINGLETON);
 
-				RabbitMqConnection connection = new RabbitMqConnection();
-				Channel channel = null;
+//				Rabbit MQ initialisation: one long-lived Connection for the app;
+//				channels are handed out per-thread via RabbitChannelProvider instead
+//				of a single Channel being shared/injected everywhere.
+				RabbitMqConnection rabbitMqConnection = new RabbitMqConnection();
+				Connection rabbitConnection = null;
 				try {
-					channel = connection.setRabbitMQConnetion();
-					bind(Channel.class).toInstance(channel);
+					rabbitConnection = rabbitMqConnection.connect();
 				} catch (Exception ex) {
-					logger.error(ex.getMessage());
+					logger.error("Failed to establish RabbitMQ connection", ex);
 				}
+				bind(Connection.class).toInstance(rabbitConnection);
+				bind(RabbitChannelProvider.class).in(Scopes.SINGLETON);
+
 				bind(ServletContainer.class).in(Scopes.SINGLETON);
 				serve("/api/*").with(ServletContainer.class, props);
 			}
@@ -153,15 +159,25 @@ public class FileServeletContextListener extends GuiceServletContextListener {
 	@Override
 	public void contextDestroyed(ServletContextEvent servletContextEvent) {
 		Injector injector = (Injector) servletContextEvent.getServletContext().getAttribute(Injector.class.getName());
-		Channel channel = injector.getInstance(Channel.class);
 		try {
 			if (scheduler != null && !scheduler.isShutdown()) {
 				scheduler.shutdown(true);
 			}
-			channel.getConnection().close();
 		} catch (Exception e) {
 			logger.error(e.getMessage());
 		}
+
+		Connection rabbitConnection = injector.getInstance(Connection.class);
+		if (rabbitConnection != null) {
+			// abort() (unlike close()) forces the connection down immediately and
+			// cancels any in-flight/scheduled automatic-recovery attempt, and never
+			// throws. A graceful close() was observed leaving the client's own
+			// background recovery thread alive past contextDestroyed(), which then
+			// crashed trying to use this webapp's classloader after Tomcat had
+			// already stopped it (surfacing as a redeploy/reload memory leak).
+			rabbitConnection.abort(AMQP.REPLY_SUCCESS, "context destroyed", 5000);
+		}
+
 		super.contextDestroyed(servletContextEvent);
 	}
 }
