@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
 import com.rabbitmq.client.Channel;
+import com.strandls.file.RabbitChannelProvider;
 import com.strandls.file.RabbitMqConnection;
 import com.strandls.file.util.AppUtil;
 import com.strandls.file.util.PropertyFileUtil;
@@ -62,12 +63,13 @@ public class QuartzJob implements Job {
 	SessionFactory sessionFactory;
 
 	@Inject
-	Channel channel;
+	RabbitChannelProvider channelProvider;
 
 	@Override
 	public void execute(JobExecutionContext context) {
 		Session session = sessionFactory.openSession();
 		try {
+			Channel channel = channelProvider.get();
 			RabbitMQProducer producer = new RabbitMQProducer(channel);
 			try (Stream<Path> stream = Files.list(Paths.get(BASE_PATH)).filter(Files::isDirectory)) {
 				List<Path> paths = stream.collect(Collectors.toList());
