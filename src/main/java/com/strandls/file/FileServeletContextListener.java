@@ -85,7 +85,7 @@ public class FileServeletContextListener extends GuiceServletContextListener {
 				try {
 					rabbitConnection = rabbitMqConnection.connect();
 				} catch (Exception ex) {
-					logger.error("Failed to establish RabbitMQ connection", ex);
+					logger.error("[biodiv-files] Failed to establish RabbitMQ connection", ex);
 				}
 				bind(Connection.class).toInstance(rabbitConnection);
 				bind(RabbitChannelProvider.class).in(Scopes.SINGLETON);
